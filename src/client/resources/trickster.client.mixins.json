@@ -7,7 +7,8 @@
 		"EntityRendererMixin",
 		"FirstPersonHandsAndItemsRendererAccessor",
 		"FirstPersonHandsAndItemsRendererMixin",
-		"HumanoidModelMixin"
+		"HumanoidModelMixin",
+		"PackRepositoryMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

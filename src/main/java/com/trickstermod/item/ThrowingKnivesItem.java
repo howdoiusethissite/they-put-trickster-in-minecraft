@@ -5,10 +5,14 @@ import com.trickstermod.entity.ThrownKnife;
 import com.trickstermod.network.KnifeThrowPayload;
 import com.trickstermod.registry.ModComponents;
 import com.trickstermod.registry.ModItems;
+import com.trickstermod.registry.ModSounds;
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.function.Consumer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -38,6 +42,9 @@ public class ThrowingKnivesItem extends Item {
 	public static final int RELOAD_TICKS = 40;
 	public static final float KNIFE_SPEED = 2.6F;
 	private static final double AIM_RANGE = 48.0;
+
+	/** Whether each player had the knives out last tick, so pulling them out can play a sound. */
+	private static final Map<ServerPlayer, Boolean> HELD_LAST_TICK = new WeakHashMap<>();
 
 	/** Set by the client so the first-person view can animate the correct arm. Never called on a dedicated server. */
 	public static Consumer<HumanoidArm> clientThrowListener = arm -> {};
@@ -90,7 +97,7 @@ public class ThrowingKnivesItem extends Item {
 
 		level.playSound(
 			null, player.getX(), player.getY(), player.getZ(),
-			SoundEvents.TRIDENT_THROW.value(), SoundSource.PLAYERS, 0.5F, 1.6F + level.getRandom().nextFloat() * 0.3F
+			ModSounds.KNIFE_THROW, SoundSource.PLAYERS, 0.5F, 0.95F + level.getRandom().nextFloat() * 0.15F
 		);
 		stack.set(ModComponents.KNIVES_LOADED, loaded - 1);
 		stack.set(ModComponents.KNIVES_LEFT_HAND_NEXT, !leftHand);
@@ -112,7 +119,7 @@ public class ThrowingKnivesItem extends Item {
 		}
 		stack.set(ModComponents.KNIVES_LEFT_HAND_NEXT, false);
 		player.getCooldowns().addCooldown(stack, RELOAD_TICKS);
-		level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.ARMOR_EQUIP_CHAIN.value(), SoundSource.PLAYERS, 1.0F, 1.2F);
+		level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.KNIFE_RELOAD, SoundSource.PLAYERS, 1.0F, 1.0F);
 		if (level.isClientSide()) {
 			clientReloadListener.run();
 		}
@@ -131,6 +138,15 @@ public class ThrowingKnivesItem extends Item {
 			player, eye, end, searchArea, entity -> !entity.isSpectator() && entity.isPickable(), eye.distanceToSqr(end)
 		);
 		return entityHit != null ? entityHit.getEntity().getBoundingBox().getCenter() : end;
+	}
+
+	/** Called every server tick for every player: plays the draw sound when they switch to the knives. */
+	public static void tickDrawSound(ServerPlayer player) {
+		boolean holding = player.getMainHandItem().is(ModItems.THROWING_KNIVES) || player.getOffhandItem().is(ModItems.THROWING_KNIVES);
+		Boolean before = HELD_LAST_TICK.put(player, holding);
+		if (holding && Boolean.FALSE.equals(before)) {
+			player.level().playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.KNIFE_DRAW, SoundSource.PLAYERS, 0.8F, 1.0F);
+		}
 	}
 
 	/** Puts one picked-up knife back into the reserve of the first knife pack that has room. */

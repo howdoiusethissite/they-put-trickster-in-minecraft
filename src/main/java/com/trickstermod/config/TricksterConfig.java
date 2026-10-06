@@ -36,6 +36,16 @@ public final class TricksterConfig {
 	public boolean pesterPets = true;
 	/** A happy Trickster sometimes laughs and hands his owner a random buff. */
 	public boolean laughBuffs = true;
+	/** Villagers are huge fans: they give big discounts while your tamed Trickster is nearby. */
+	public boolean villagerDiscounts = true;
+	/** How much cheaper trades get while he's around (0.5 = half price). */
+	public double villagerDiscount = 0.5;
+	/** Pillagers and other illagers freeze up the first time they see him. */
+	public boolean starstruckIllagers = true;
+	/** How long a starstruck illager stands there gawking. */
+	public double starstruckSeconds = 4.0;
+	/** Files in config/trickster/sounds replace the built-in sounds (false: they play alongside them). */
+	public boolean customSoundsReplaceDefaults = true;
 
 	public static TricksterConfig get() {
 		return instance;

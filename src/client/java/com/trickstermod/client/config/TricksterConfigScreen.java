@@ -1,5 +1,7 @@
 package com.trickstermod.client.config;
 
+import com.mojang.blaze3d.Blaze3D;
+import com.trickstermod.client.sound.CustomSoundPack;
 import com.trickstermod.config.TricksterConfig;
 import java.util.function.Consumer;
 import java.util.function.DoubleFunction;
@@ -15,7 +17,8 @@ import org.jspecify.annotations.Nullable;
 
 /** In-game settings for the mod. Opened from Mod Menu or with the "Open Trickster settings" key (O by default). */
 public class TricksterConfigScreen extends Screen {
-	private static final int ROW_HEIGHT = 24;
+	private static final int ROW_HEIGHT = 22;
+	private static final int TOP = 34;
 	private static final int COLUMN_WIDTH = 200;
 	private final @Nullable Screen parent;
 
@@ -29,7 +32,7 @@ public class TricksterConfigScreen extends Screen {
 		TricksterConfig config = TricksterConfig.get();
 		int left = this.width / 2 - COLUMN_WIDTH - 5;
 		int right = this.width / 2 + 5;
-		int top = 40;
+		int top = TOP;
 
 		this.addRenderableWidget(slider(left, top, "tameChance", 0.05, 1.0,
 			() -> config.tameChance, v -> config.tameChance = v, v -> Math.round(v * 100) + "%"));
@@ -48,16 +51,33 @@ public class TricksterConfigScreen extends Screen {
 		this.addRenderableWidget(toggle(right, top + ROW_HEIGHT * 3, "laughBuffs", () -> config.laughBuffs, v -> config.laughBuffs = v));
 		this.addRenderableWidget(toggle(right, top + ROW_HEIGHT * 4, "naturalSpawning", () -> config.naturalSpawning, v -> config.naturalSpawning = v));
 
-		this.addRenderableWidget(
-			Button.builder(CommonComponents.GUI_DONE, button -> this.onClose()).bounds(this.width / 2 - 100, top + ROW_HEIGHT * 6, 200, 20).build()
-		);
+		this.addRenderableWidget(slider(left, top + ROW_HEIGHT * 5, "villagerDiscount", 0.1, 0.9,
+			() -> config.villagerDiscount, v -> config.villagerDiscount = v, v -> Math.round(v * 100) + "% off"));
+		this.addRenderableWidget(toggle(right, top + ROW_HEIGHT * 5, "villagerDiscounts", () -> config.villagerDiscounts, v -> config.villagerDiscounts = v));
+		this.addRenderableWidget(slider(left, top + ROW_HEIGHT * 6, "starstruckSeconds", 1.0, 15.0,
+			() -> config.starstruckSeconds, v -> config.starstruckSeconds = v, v -> Math.round(v) + "s"));
+		this.addRenderableWidget(toggle(right, top + ROW_HEIGHT * 6, "starstruckIllagers", () -> config.starstruckIllagers, v -> config.starstruckIllagers = v));
+
+		this.addRenderableWidget(toggle(left, top + ROW_HEIGHT * 7, "customSoundsReplaceDefaults",
+			() -> config.customSoundsReplaceDefaults, v -> config.customSoundsReplaceDefaults = v));
+		this.addRenderableWidget(Button.builder(Component.translatable("screen.trickster.config.open_sounds"), button -> {
+			CustomSoundPack.createFolders();
+			Blaze3D.openPath(CustomSoundPack.DIRECTORY);
+		}).bounds(right, top + ROW_HEIGHT * 7, COLUMN_WIDTH, 20).build());
+
+		int bottom = top + ROW_HEIGHT * 8 + 6;
+		this.addRenderableWidget(Button.builder(Component.translatable("screen.trickster.config.reload_sounds"), button -> {
+			TricksterConfig.save();
+			this.minecraft.reloadResourcePacks();
+		}).bounds(left, bottom, COLUMN_WIDTH, 20).build());
+		this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose()).bounds(right, bottom, COLUMN_WIDTH, 20).build());
 	}
 
 	@Override
 	public void extractRenderState(final GuiGraphicsExtractor graphics, final int mouseX, final int mouseY, final float a) {
 		super.extractRenderState(graphics, mouseX, mouseY, a);
-		graphics.centeredText(this.font, this.title, this.width / 2, 16, 0xFFFFFFFF);
-		graphics.centeredText(this.font, Component.translatable("screen.trickster.config.restart"), this.width / 2, 40 + ROW_HEIGHT * 5 + 6, 0xFFAAAAAA);
+		graphics.centeredText(this.font, this.title, this.width / 2, 8, 0xFFFFFFFF);
+		graphics.centeredText(this.font, Component.translatable("screen.trickster.config.restart"), this.width / 2, 20, 0xFFAAAAAA);
 	}
 
 	@Override

@@ -3,6 +3,8 @@ package com.trickstermod;
 import com.mojang.serialization.Codec;
 import com.trickstermod.config.TricksterConfig;
 import com.trickstermod.entity.TricksterEntity;
+import com.trickstermod.fan.Fans;
+import com.trickstermod.item.ThrowingKnivesItem;
 import com.trickstermod.laceration.Laceration;
 import com.trickstermod.network.KnifeThrowPayload;
 import com.trickstermod.registry.ModComponents;
@@ -14,6 +16,7 @@ import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
 import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
@@ -46,6 +49,7 @@ public class TricksterMod implements ModInitializer {
 		ModEntities.init();
 		ModItems.init();
 		Laceration.init();
+		Fans.init();
 
 		PayloadTypeRegistry.clientboundPlay().register(KnifeThrowPayload.TYPE, KnifeThrowPayload.STREAM_CODEC);
 
@@ -62,6 +66,7 @@ public class TricksterMod implements ModInitializer {
 		}
 
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> giveSpawnEgg(handler.player));
+		ServerTickEvents.END_SERVER_TICK.register(server -> server.getPlayerList().getPlayers().forEach(ThrowingKnivesItem::tickDrawSound));
 	}
 
 	private static void giveSpawnEgg(ServerPlayer player) {
