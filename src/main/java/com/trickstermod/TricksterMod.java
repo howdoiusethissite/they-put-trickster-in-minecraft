@@ -7,7 +7,9 @@ import com.trickstermod.fan.Autographs;
 import com.trickstermod.fan.Fans;
 import com.trickstermod.item.ThrowingKnivesItem;
 import com.trickstermod.laceration.Laceration;
+import com.trickstermod.entity.ZoomTracker;
 import com.trickstermod.network.KnifeThrowPayload;
+import com.trickstermod.network.ZoomPayload;
 import com.trickstermod.registry.ModComponents;
 import com.trickstermod.registry.ModEntities;
 import com.trickstermod.registry.ModItems;
@@ -20,6 +22,7 @@ import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
@@ -54,6 +57,8 @@ public class TricksterMod implements ModInitializer {
 		Autographs.init();
 
 		PayloadTypeRegistry.clientboundPlay().register(KnifeThrowPayload.TYPE, KnifeThrowPayload.STREAM_CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(ZoomPayload.TYPE, ZoomPayload.STREAM_CODEC);
+		ServerPlayNetworking.registerGlobalReceiver(ZoomPayload.TYPE, (payload, context) -> ZoomTracker.set(context.player(), payload.zoomed()));
 
 		FabricDefaultAttributeRegistry.register(ModEntities.TRICKSTER, TricksterEntity.createAttributes());
 		SpawnPlacements.register(
@@ -68,6 +73,7 @@ public class TricksterMod implements ModInitializer {
 		}
 
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> giveSpawnEgg(handler.player));
+		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> ZoomTracker.set(handler.player, false));
 		ServerTickEvents.END_SERVER_TICK.register(server -> server.getPlayerList().getPlayers().forEach(ThrowingKnivesItem::tickDrawSound));
 	}
 

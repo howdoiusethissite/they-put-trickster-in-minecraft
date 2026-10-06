@@ -54,6 +54,8 @@ public final class TricksterConfig {
 	public boolean jealousOfPets = false;
 	/** Tamed Tricksters dance by playing jukeboxes, and villagers come watch and tip. */
 	public boolean jukeboxPerformances = true;
+	/** Zooming in with a zoom mod (anything that narrows the camera's field of view) makes him pose, like a spyglass. */
+	public boolean zoomModsCount = true;
 	/** Where his meters sit on screen, from 0 (left/top edge) to 1 (right/bottom edge). */
 	public double hudX = 0.0;
 	public double hudY = 0.0;

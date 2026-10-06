@@ -12,7 +12,10 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.SwingAnimationType;
+import net.minecraft.world.item.component.SwingAnimation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.SpawnEggItem;
@@ -34,6 +37,8 @@ public final class ModItems {
 		"polished_head_smasher",
 		HeadSmasherItem::new,
 		new Item.Properties().sword(ToolMaterial.IRON, 4.0F, -2.8F).rarity(Rarity.RARE)
+			// A slower, heavier swing animation (vanilla is 6 ticks) so the two-handed bat swing reads clearly.
+			.component(DataComponents.ATTACK_ANIMATION, new SwingAnimation(SwingAnimationType.WHACK, 11))
 	);
 	public static final Item TRICKSTER_SPAWN_EGG = register(
 		"trickster_spawn_egg", SpawnEggItem::new, new Item.Properties().spawnEgg(ModEntities.TRICKSTER)

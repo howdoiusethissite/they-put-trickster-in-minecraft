@@ -28,11 +28,16 @@ Adds the Trickster from Dead by Daylight to Minecraft.
 - **Jealousy** (off by default, two separate toggles): while you look at one of your other Tricksters, or at one of your
   other pets, his attention drains 3x as fast. He sulks with a sound and angry particles and the HUD says "Jealous!".
 - **Jukebox performances:** when a jukebox within 16 blocks is playing, a tamed Trickster walks over and dances next
-  to it. His meters pause during the show. Villagers within 16 blocks come to watch, and ones in the front row
+  to it. He has six routines (arm pumps, idol pointing, a wave, heart hands, a twirl, and a shuffle) and switches to a
+  new one every 8 seconds. His meters pause during the show. Villagers within 16 blocks come to watch, and ones in the front row
   sometimes throw him a tip (usually an emerald, sometimes a flower or a snack) that lands at his feet for you to
   pick up. Each villager tips at most once per in-game day. The show stops if you walk more than 24 blocks away.
 - **Posing:** look at him through a spyglass and he strikes a pose (peace sign, star, or pointing at you), switching
-  poses every few seconds while you keep watching.
+  poses every few seconds while you keep watching. Each new pose sets off a camera flash and pink sparkles. Zoom mods
+  count too ("Zoom mods make him pose", on by default): the client notices when the camera's field of view drops below
+  60% of your FOV setting and tells the server, so any zoom that works by narrowing the FOV (Ok Zoomer, Zoomify and
+  similar) should trigger it. This hasn't been tested against each zoom mod, and a mod that zooms some other way
+  won't be picked up.
 - **Autographs:** right click him with a book and quill and he signs it with a personal message to you. He refuses
   while bored, angry or jealous. Right click a villager with an original autograph (not a copy) and they pay 8 to 16
   emeralds. Each villager only takes one.
@@ -99,6 +104,8 @@ them too.
 
 ### Polished Head Smasher
 - A heavy bat with extra knockback. Dropped by the Trickster (35%) or crafted.
+- Swings two-handed like a baseball bat, for him and for players: cocked back over the shoulder, swept flat across the
+  body, then a follow-through. In first person the bat sweeps across the screen.
 
 ## Settings
 
@@ -124,6 +131,7 @@ Everything is saved to `config/trickster.json`:
 | Jealous of Tricksters | off |
 | Jealous of other pets | off |
 | Jukebox performances | on |
+| Zoom mods make him pose | on |
 | Meter position | top left (drag to move) |
 
 The settings screen has two pages; the "Personality >" button at the bottom switches between them.
@@ -158,3 +166,6 @@ Taken by the headless game test.
 ![Villager fan discount](docs/screenshots/villager_discount.png)
 ![Starstruck pillager](docs/screenshots/starstruck_pillager.png)
 ![Settings](docs/screenshots/config.png)
+![Two-handed bat swing](docs/screenshots/bat_swing.png)
+![Dance routines](docs/screenshots/dances.png)
+![Pose flash and first-person bat swing](docs/screenshots/pose_flash_and_fp_swing.png)

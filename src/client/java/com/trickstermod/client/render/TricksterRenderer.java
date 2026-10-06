@@ -37,7 +37,9 @@ public class TricksterRenderer extends HumanoidMobRenderer<TricksterEntity, Huma
 	@Override
 	public void extractRenderState(final TricksterEntity entity, final HumanoidRenderState state, final float partialTicks) {
 		super.extractRenderState(entity, state, partialTicks);
-		state.setData(TricksterAnimations.DANCING, entity.isPerforming());
+		int dance = entity.getDanceId();
+		state.setData(TricksterAnimations.DANCE, dance);
+		state.bodyRot += TricksterAnimations.twirlDegrees(dance, state.ageInTicks);
 		state.setData(TricksterAnimations.POSE, entity.getPoseId());
 	}
 
