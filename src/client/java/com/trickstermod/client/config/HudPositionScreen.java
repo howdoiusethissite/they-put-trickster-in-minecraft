@@ -1,5 +1,6 @@
 package com.trickstermod.client.config;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.trickstermod.client.hud.TricksterHud;
 import com.trickstermod.config.TricksterConfig;
 import java.util.List;
@@ -77,7 +78,8 @@ public class HudPositionScreen extends Screen {
 		}
 		int left = this.panelLeft();
 		int top = this.panelTop();
-		if (event.button() == 0 && event.x() >= left && event.x() < left + TricksterHud.PANEL_WIDTH && event.y() >= top && event.y() < top + this.panelHeight()) {
+		// Left click is button 1 in 26.x (it used to be 0), so use the named constant.
+		if (event.button() == InputConstants.MOUSE_BUTTON_LEFT && event.x() >= left && event.x() < left + TricksterHud.PANEL_WIDTH && event.y() >= top && event.y() < top + this.panelHeight()) {
 			this.dragging = true;
 			this.grabX = event.x() - left;
 			this.grabY = event.y() - top;
