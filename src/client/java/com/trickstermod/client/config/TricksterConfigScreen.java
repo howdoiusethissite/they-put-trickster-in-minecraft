@@ -62,6 +62,7 @@ public class TricksterConfigScreen extends Screen {
 		this.addRenderableWidget(Button.builder(Component.translatable("screen.trickster.config.move_meters"),
 			button -> this.minecraft.gui.setScreen(new HudPositionScreen(this))
 		).bounds(left, top + ROW_HEIGHT * 2, COLUMN_WIDTH, 20).build());
+		this.addRenderableWidget(toggle(right, top + ROW_HEIGHT * 2, "zoomModsCount", () -> config.zoomModsCount, v -> config.zoomModsCount = v));
 	}
 
 	private void initGeneralPage(int left, int right, int top) {

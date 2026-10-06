@@ -1,11 +1,13 @@
 package com.trickstermod.client.mixin;
 
+import com.trickstermod.client.render.BatSwing;
 import com.trickstermod.client.render.ThirdPersonThrows;
 import com.trickstermod.client.render.TricksterAnimations;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.HumanoidArm;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -13,7 +15,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Overhand knife throw in third person, for players and the Trickster alike, plus the Trickster's dances and poses. */
+/**
+ * Overhand knife throw and two-handed bat swing in third person, for players and the Trickster alike, plus the
+ * Trickster's dances and poses.
+ */
 @Mixin(HumanoidModel.class)
 public abstract class HumanoidModelMixin {
 	private static final float RAISED = -2.75F;
@@ -33,6 +38,10 @@ public abstract class HumanoidModelMixin {
 
 	@Shadow
 	@Final
+	public ModelPart body;
+
+	@Shadow
+	@Final
 	public ModelPart rightLeg;
 
 	@Shadow
@@ -44,8 +53,15 @@ public abstract class HumanoidModelMixin {
 		Integer trickPose = state.getData(TricksterAnimations.POSE);
 		if (trickPose != null && trickPose > 0) {
 			TricksterAnimations.pose(trickPose, this.head, this.rightArm, this.leftArm);
-		} else if (Boolean.TRUE.equals(state.getData(TricksterAnimations.DANCING))) {
-			TricksterAnimations.dance(state.ageInTicks, this.head, this.rightArm, this.leftArm, this.rightLeg, this.leftLeg);
+		} else {
+			Integer dance = state.getData(TricksterAnimations.DANCE);
+			if (dance != null && dance > 0) {
+				TricksterAnimations.dance(dance, state.ageInTicks, this.head, this.body, this.rightArm, this.leftArm, this.rightLeg, this.leftLeg);
+			}
+		}
+		HumanoidArm batArm = BatSwing.swingingArm(state);
+		if (batArm != null) {
+			BatSwing.thirdPerson(state.swingAnimation, batArm, state.ageScale, this.body, this.rightArm, this.leftArm);
 		}
 		Float right = state.getData(ThirdPersonThrows.RIGHT_PROGRESS);
 		Float left = state.getData(ThirdPersonThrows.LEFT_PROGRESS);
@@ -54,6 +70,14 @@ public abstract class HumanoidModelMixin {
 		}
 		if (left != null && left >= 0.0F) {
 			pose(this.leftArm, left, -1.0F);
+		}
+	}
+
+	/** The bat gets its own two-handed swing (applied at the end of setupAnim), so skip the one-armed whack. */
+	@Inject(method = "setupAttackAnimation(Lnet/minecraft/client/renderer/entity/state/HumanoidRenderState;)V", at = @At("HEAD"), cancellable = true)
+	private void trickster$skipWhackForBat(final HumanoidRenderState state, final CallbackInfo ci) {
+		if (BatSwing.swingingArm(state) != null) {
+			ci.cancel();
 		}
 	}
 

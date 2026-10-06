@@ -10,6 +10,8 @@ import java.util.EnumSet;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.particles.ColorParticleOption;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -91,12 +93,15 @@ public class TricksterEntity extends TamableAnimal {
 	private static final float JEALOUS_DRAIN_MULTIPLIER = 3.0F;
 	/** How many different poses {@link PoseGoal} can strike (pose ids are 1..POSE_COUNT, 0 means not posing). */
 	public static final int POSE_COUNT = 3;
+	/** How many dance routines {@link PerformGoal} cycles through (ids 1..DANCE_COUNT, 0 means not dancing). */
+	public static final int DANCE_COUNT = 6;
+	private static final DustParticleOptions POSE_SPARKLE = new DustParticleOptions(0xFF4FA3, 1.0F);
 
 	private static final EntityDataAccessor<Float> DATA_BOREDOM = SynchedEntityData.defineId(TricksterEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Float> DATA_ATTENTION = SynchedEntityData.defineId(TricksterEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Byte> DATA_MOOD = SynchedEntityData.defineId(TricksterEntity.class, EntityDataSerializers.BYTE);
 	private static final EntityDataAccessor<Boolean> DATA_JEALOUS = SynchedEntityData.defineId(TricksterEntity.class, EntityDataSerializers.BOOLEAN);
-	private static final EntityDataAccessor<Boolean> DATA_PERFORMING = SynchedEntityData.defineId(TricksterEntity.class, EntityDataSerializers.BOOLEAN);
+	private static final EntityDataAccessor<Byte> DATA_DANCE = SynchedEntityData.defineId(TricksterEntity.class, EntityDataSerializers.BYTE);
 	private static final EntityDataAccessor<Byte> DATA_POSE = SynchedEntityData.defineId(TricksterEntity.class, EntityDataSerializers.BYTE);
 
 	public enum Mood {
@@ -138,7 +143,7 @@ public class TricksterEntity extends TamableAnimal {
 		entityData.define(DATA_ATTENTION, MAX_METER);
 		entityData.define(DATA_MOOD, (byte)Mood.CALM.ordinal());
 		entityData.define(DATA_JEALOUS, false);
-		entityData.define(DATA_PERFORMING, false);
+		entityData.define(DATA_DANCE, (byte)0);
 		entityData.define(DATA_POSE, (byte)0);
 	}
 
@@ -183,7 +188,12 @@ public class TricksterEntity extends TamableAnimal {
 
 	/** True while he dances by a playing jukebox. */
 	public boolean isPerforming() {
-		return this.entityData.get(DATA_PERFORMING);
+		return this.getDanceId() > 0;
+	}
+
+	/** The dance routine he is doing by a jukebox, 1..{@link #DANCE_COUNT}, or 0 when he isn't dancing. */
+	public int getDanceId() {
+		return this.entityData.get(DATA_DANCE);
 	}
 
 	/** The pose he is striking for a spyglass, 1..{@link #POSE_COUNT}, or 0 when he isn't posing. */
@@ -521,8 +531,28 @@ public class TricksterEntity extends TamableAnimal {
 		this.laugh();
 	}
 
-	private void setPerforming(boolean performing) {
-		this.entityData.set(DATA_PERFORMING, performing);
+	private void setDanceId(int dance) {
+		this.entityData.set(DATA_DANCE, (byte)dance);
+	}
+
+	/** A different routine from the one he is doing now. */
+	private int nextDance() {
+		int current = this.getDanceId();
+		if (current == 0) {
+			return 1 + this.random.nextInt(DANCE_COUNT);
+		}
+		return 1 + (current + this.random.nextInt(DANCE_COUNT - 1)) % DANCE_COUNT;
+	}
+
+	/** Camera flash and pink sparkles, for when he strikes a pose through someone's spyglass or zoom. */
+	private void photoFlash() {
+		if (!(this.level() instanceof ServerLevel level)) {
+			return;
+		}
+		double y = this.getY() + this.getBbHeight() * 0.6;
+		level.sendParticles(ColorParticleOption.create(ParticleTypes.FLASH, 0xFFFFFFFF), this.getX(), y, this.getZ(), 1, 0.0, 0.0, 0.0, 0.0);
+		level.sendParticles(POSE_SPARKLE, this.getX(), y, this.getZ(), 14, 0.5, 0.7, 0.5, 0.0);
+		level.sendParticles(ParticleTypes.END_ROD, this.getX(), y, this.getZ(), 6, 0.3, 0.5, 0.3, 0.05);
 	}
 
 	private void setPoseId(int pose) {
@@ -905,7 +935,7 @@ public class TricksterEntity extends TamableAnimal {
 
 		private boolean beingPhotographed() {
 			ServerPlayer owner = TricksterEntity.this.getNearbyOwner();
-			return owner != null && owner.isScoping() && OwnerGaze.watchedPets(owner).contains(TricksterEntity.this);
+			return owner != null && ZoomTracker.isZooming(owner) && OwnerGaze.watchedPets(owner).contains(TricksterEntity.this);
 		}
 
 		@Override
@@ -926,6 +956,7 @@ public class TricksterEntity extends TamableAnimal {
 			self.getNavigation().stop();
 			self.freeHands();
 			self.setPoseId(1 + self.random.nextInt(POSE_COUNT));
+			self.photoFlash();
 			if (self.random.nextBoolean()) {
 				self.laugh();
 			}
@@ -955,6 +986,10 @@ public class TricksterEntity extends TamableAnimal {
 				// New pose, never the same one twice in a row.
 				int next = 1 + (self.getPoseId() + self.random.nextInt(POSE_COUNT - 1)) % POSE_COUNT;
 				self.setPoseId(next);
+				self.photoFlash();
+			} else if (this.ticks % 8 == 0 && self.level() instanceof ServerLevel level) {
+				// A little glimmer between shots so it's clear he knows he's on camera.
+				level.sendParticles(ParticleTypes.WAX_ON, self.getX(), self.getY() + self.getBbHeight() * 0.7, self.getZ(), 1, 0.4, 0.5, 0.4, 0.0);
 			}
 		}
 	}
@@ -967,6 +1002,7 @@ public class TricksterEntity extends TamableAnimal {
 		private static final double JUKEBOX_RANGE = 16.0;
 		private static final double STAGE_DISTANCE = 3.0;
 		private static final double OWNER_LEAVE_DISTANCE = 24.0;
+		private static final int ROUTINE_TICKS = 160;
 
 		private int scanCooldown;
 		private int ticks;
@@ -1016,7 +1052,7 @@ public class TricksterEntity extends TamableAnimal {
 		public void stop() {
 			this.stage = null;
 			this.scanCooldown = 20;
-			TricksterEntity.this.setPerforming(false);
+			TricksterEntity.this.setDanceId(0);
 			TricksterEntity.this.holdKnives(false);
 			TricksterEntity.this.getNavigation().stop();
 		}
@@ -1045,13 +1081,16 @@ public class TricksterEntity extends TamableAnimal {
 
 			double distance = self.distanceToSqr(this.stage.getX() + 0.5, this.stage.getY(), this.stage.getZ() + 0.5);
 			if (distance > STAGE_DISTANCE * STAGE_DISTANCE) {
-				self.setPerforming(false);
+				self.setDanceId(0);
 				self.getNavigation().moveTo(this.stage.getX() + 0.5, this.stage.getY(), this.stage.getZ() + 0.5, 1.1);
 				return;
 			}
 
 			self.getNavigation().stop();
-			self.setPerforming(true);
+			if (self.getDanceId() == 0 || this.ticks % ROUTINE_TICKS == 0) {
+				// Switch to a new routine every few seconds so the show doesn't loop the same moves.
+				self.setDanceId(self.nextDance());
+			}
 			LivingEntity owner = self.getOwner();
 			if (owner != null && owner.distanceToSqr(self) < 16.0 * 16.0) {
 				self.getLookControl().setLookAt(owner, 10.0F, 10.0F);

@@ -9,6 +9,7 @@ import com.trickstermod.client.render.ThirdPersonThrows;
 import com.trickstermod.client.render.ThrownKnifeRenderer;
 import com.trickstermod.client.render.TricksterRenderer;
 import com.trickstermod.client.sound.CustomSoundPack;
+import com.trickstermod.client.zoom.ZoomDetector;
 import com.trickstermod.item.ThrowingKnivesItem;
 import com.trickstermod.network.KnifeThrowPayload;
 import com.trickstermod.registry.ModEntities;
@@ -37,12 +38,16 @@ public class TricksterModClient implements ClientModInitializer {
 		ThrowingKnivesItem.clientReloadListener = KnifeThrowAnimation::onReload;
 
 		ClientPlayNetworking.registerGlobalReceiver(KnifeThrowPayload.TYPE, (payload, context) -> ThirdPersonThrows.onPayload(payload));
-		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ThirdPersonThrows.clear());
+		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+			ThirdPersonThrows.clear();
+			ZoomDetector.reset();
+		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while (OPEN_CONFIG.consumeClick()) {
 				client.gui.setScreen(new TricksterConfigScreen(client.gui.screen()));
 			}
+			ZoomDetector.tick(client);
 		});
 
 		HudElementRegistry.attachElementAfter(VanillaHudElements.CROSSHAIR, TricksterMod.id("trickster_hud"), TricksterHud::extractRenderState);
