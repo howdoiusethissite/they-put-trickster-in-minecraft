@@ -35,6 +35,13 @@ public class TricksterRenderer extends HumanoidMobRenderer<TricksterEntity, Huma
 	}
 
 	@Override
+	public void extractRenderState(final TricksterEntity entity, final HumanoidRenderState state, final float partialTicks) {
+		super.extractRenderState(entity, state, partialTicks);
+		state.setData(TricksterAnimations.DANCING, entity.isPerforming());
+		state.setData(TricksterAnimations.POSE, entity.getPoseId());
+	}
+
+	@Override
 	public Identifier getTextureLocation(final HumanoidRenderState state) {
 		return TEXTURE;
 	}

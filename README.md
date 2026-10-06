@@ -19,7 +19,23 @@ Adds the Trickster from Dead by Daylight to Minecraft.
   below half a heart, so they can't kill you. Right clicking him with a music disc (not used up) clears his boredom.
 - **Attention meter:** drains while you aren't looking at him and refills while he's on your screen. At 0 he chases
   you and beats you with his bat until you look at him long enough to bring it back up to 40%.
-- Both meters show in the top-left corner while your Trickster is within 32 blocks. They pause while he sits.
+- Both meters show in a small panel while your Tricksters are within 32 blocks. They pause while he sits. With more
+  than one Trickster, the one that needs you most (angry, then bored, then jealous, then lowest attention) gets the
+  full view and the rest get a mini row each. Drag the panel anywhere with "Move Trickster meters..." on the
+  Personality page of the settings.
+- **Group attention** (on by default): looking at one of your Tricksters also counts for every Trickster standing
+  within 5 blocks of him, so a group only needs one glance.
+- **Jealousy** (off by default, two separate toggles): while you look at one of your other Tricksters, or at one of your
+  other pets, his attention drains 3x as fast. He sulks with a sound and angry particles and the HUD says "Jealous!".
+- **Jukebox performances:** when a jukebox within 16 blocks is playing, a tamed Trickster walks over and dances next
+  to it. His meters pause during the show. Villagers within 16 blocks come to watch, and ones in the front row
+  sometimes throw him a tip (usually an emerald, sometimes a flower or a snack) that lands at his feet for you to
+  pick up. Each villager tips at most once per in-game day. The show stops if you walk more than 24 blocks away.
+- **Posing:** look at him through a spyglass and he strikes a pose (peace sign, star, or pointing at you), switching
+  poses every few seconds while you keep watching.
+- **Autographs:** right click him with a book and quill and he signs it with a personal message to you. He refuses
+  while bored, angry or jealous. Right click a villager with an original autograph (not a copy) and they pay 8 to 16
+  emeralds. Each villager only takes one.
 - **Personality:** every few minutes he picks one of your other pets and chases it around bonking it with his bat
   (it is always left with at least a heart). When he's happy and you've been paying attention to him he laughs and
   gives you a random 30-second buff. He also laughs when his knives finish something off.
@@ -28,12 +44,19 @@ Adds the Trickster from Dead by Daylight to Minecraft.
   staring for 4 seconds instead of attacking. Both can be tuned or turned off in the settings.
 - Every player gets a Trickster spawn egg the first time they join a world (can be turned off).
 
+### NoSpin Lightstick
+- Right click to call every Trickster you own within 64 blocks to your side. He stands up if he was sitting and
+  laughs. Not used up.
+- With no Trickster of yours nearby, use it on a block to summon one who is already tamed to you. That uses up the
+  lightstick (except in creative).
+- Recipe: glowstone dust / lime dye / glowstone dust on top, glowstone dust / any music disc / glowstone dust in the
+  middle, stick on the bottom.
+
 ### Throwing Knives
 - Recipe: iron ingot on top, iron / pink dye / iron in the middle, stick on the bottom.
-- 28 knives per magazine; the pack starts with a full magazine plus 60 spare knives. No ammo crafting needed.
+- 28 knives per magazine, and the pack never runs out: when the magazine is empty, right click reloads (2 seconds).
 - Hold right click to throw; each knife alternates between your right and left hand in first person.
-- When the magazine is empty, right click reloads from the spare knives (2 seconds).
-- Knives that stick in the ground can be picked back up and go back into the spare pile.
+- Knives that land vanish after a couple of seconds, so there is nothing to pick back up.
 
 ### Third person
 - Knife throws use an overhand throwing animation on the matching arm, for players and the Trickster.
@@ -50,16 +73,16 @@ Every sound picks a random file each time it plays, and each one can have as man
 
 | Sound | When it plays | Built-in |
 | --- | --- | --- |
-| `trickster.laugh` | buffs, pestering pets, finishing something off, sometimes when idle | 5 laugh recordings |
-| `trickster.idle` | random noises while he hangs around | vanilla placeholder |
-| `trickster.annoyed` | he gets bored, feels ignored, or refuses a disc | vanilla placeholder |
-| `laceration.warning` | one knife away from a full meter | vanilla placeholder |
-| `laceration.max` | the meter fills | vanilla placeholder |
-| `knife.throw` | a knife is thrown | vanilla placeholder |
-| `knife.hit_flesh` | a knife hits a mob or player | vanilla placeholder |
-| `knife.hit_block` | a knife hits a block or something that isn't alive (boats, armor stands) | vanilla placeholder |
-| `knife.reload` | the knife pack reloads | vanilla placeholder |
-| `knife.draw` | knives are pulled out (switching to the pack, or him swapping from bat to knives) | vanilla placeholder |
+| `trickster.laugh` | buffs, pestering pets, finishing something off, sometimes when idle | 15 |
+| `trickster.idle` | random noises while he hangs around | 10 |
+| `trickster.annoyed` | he gets bored, feels ignored, gets jealous, or refuses a disc or a book | 5 |
+| `laceration.warning` | one knife away from a full meter | 1 |
+| `laceration.max` | the meter fills | 1 |
+| `knife.throw` | a knife is thrown | 6 |
+| `knife.hit_flesh` | a knife hits a mob or player | 10 |
+| `knife.hit_block` | a knife hits a block or something that isn't alive (boats, armor stands) | 5 |
+| `knife.reload` | the knife pack reloads | 1 |
+| `knife.draw` | knives are pulled out (switching to the pack, or him swapping from bat to knives) | 1 |
 
 The knife sounds are shared by the Throwing Knives item and the Trickster's own knives.
 
@@ -68,8 +91,11 @@ the settings screen takes you there). Drop `.ogg` files into a folder (any file 
 then press "Reload sounds" or F3+T. By default your files replace the built-in ones for that sound; turn off "Custom
 sounds replace built-in" to play them alongside the built-in ones.
 
-**Changing the built-in sounds:** the defaults live in `src/main/resources/assets/trickster/sounds/` and are listed in
-`assets/trickster/sounds.json`. A normal resource pack can override them too.
+**Changing the built-in sounds:** the defaults live in `src/main/resources/assets/trickster/sounds/<group>/<name>/`
+(for example `sounds/knife/throw/throw1.ogg`) and are listed in `assets/trickster/sounds.json`. Anything in there is
+packed into the jar by `./gradlew build`, so no config folder is needed. To add more, drop the file in the matching
+folder, give it the next number, and add it to that sound's list in `sounds.json`. A normal resource pack can override
+them too.
 
 ### Polished Head Smasher
 - A heavy bat with extra knockback. Dropped by the Trickster (35%) or crafted.
@@ -94,6 +120,13 @@ Everything is saved to `config/trickster.json`:
 | Villager fan discounts | on, 50% off |
 | Starstruck raiders | on, 4 s |
 | Custom sounds replace built-in | on |
+| Group attention | on |
+| Jealous of Tricksters | off |
+| Jealous of other pets | off |
+| Jukebox performances | on |
+| Meter position | top left (drag to move) |
+
+The settings screen has two pages; the "Personality >" button at the bottom switches between them.
 
 ## Building
 
@@ -104,6 +137,9 @@ Requires Java 25.
 ```
 
 The mod jar ends up in `build/libs/`.
+
+The version number lives in `gradle.properties` (`version=`) and is bumped with every update; it ends up in the
+jar name and in the mod list in game.
 
 `./gradlew runClientGameTest` boots a test world and saves screenshots of the mod's visuals to
 `build/run/clientGameTest/screenshots`.

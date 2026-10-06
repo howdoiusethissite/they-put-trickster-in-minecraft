@@ -13,13 +13,18 @@ public final class ModComponents {
 	public static final DataComponentType<Integer> KNIVES_LOADED = register(
 		"knives_loaded", DataComponentType.<Integer>builder().persistent(ExtraCodecs.NON_NEGATIVE_INT).networkSynchronized(ByteBufCodecs.VAR_INT)
 	);
-	/** Spare knives used when reloading. */
+	/** Spare knives from before the packs became bottomless. Unused, but still registered so old saves load. */
 	public static final DataComponentType<Integer> KNIVES_RESERVE = register(
 		"knives_reserve", DataComponentType.<Integer>builder().persistent(ExtraCodecs.NON_NEGATIVE_INT).networkSynchronized(ByteBufCodecs.VAR_INT)
 	);
 	/** Which hand throws next; flips after every throw. */
 	public static final DataComponentType<Boolean> KNIVES_LEFT_HAND_NEXT = register(
 		"knives_left_hand_next", DataComponentType.<Boolean>builder().persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL)
+	);
+
+	/** Marks a written book the Trickster signed himself (as opposed to one a player wrote). */
+	public static final DataComponentType<Boolean> AUTOGRAPH = register(
+		"autograph", DataComponentType.<Boolean>builder().persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL)
 	);
 
 	private static <T> DataComponentType<T> register(String name, DataComponentType.Builder<T> builder) {

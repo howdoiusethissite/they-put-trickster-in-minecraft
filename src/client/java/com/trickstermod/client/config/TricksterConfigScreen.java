@@ -20,7 +20,9 @@ public class TricksterConfigScreen extends Screen {
 	private static final int ROW_HEIGHT = 22;
 	private static final int TOP = 34;
 	private static final int COLUMN_WIDTH = 200;
+	private static final int PAGES = 2;
 	private final @Nullable Screen parent;
+	private int page;
 
 	public TricksterConfigScreen(final @Nullable Screen parent) {
 		super(Component.translatable("screen.trickster.config"));
@@ -29,10 +31,41 @@ public class TricksterConfigScreen extends Screen {
 
 	@Override
 	protected void init() {
-		TricksterConfig config = TricksterConfig.get();
 		int left = this.width / 2 - COLUMN_WIDTH - 5;
 		int right = this.width / 2 + 5;
-		int top = TOP;
+		if (this.page == 0) {
+			this.initGeneralPage(left, right, TOP);
+		} else {
+			this.initPersonalityPage(left, right, TOP);
+		}
+
+		int bottom = TOP + ROW_HEIGHT * 8 + 6;
+		int third = (COLUMN_WIDTH * 2 + 10 - 10) / 3;
+		this.addRenderableWidget(Button.builder(Component.translatable("screen.trickster.config.reload_sounds"), button -> {
+			TricksterConfig.save();
+			this.minecraft.reloadResourcePacks();
+		}).bounds(left, bottom, third, 20).build());
+		this.addRenderableWidget(Button.builder(Component.translatable("screen.trickster.config.page." + ((this.page + 1) % PAGES)), button -> {
+			this.page = (this.page + 1) % PAGES;
+			this.rebuildWidgets();
+		}).bounds(left + third + 5, bottom, third, 20).build());
+		this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
+			.bounds(left + (third + 5) * 2, bottom, third, 20).build());
+	}
+
+	private void initPersonalityPage(int left, int right, int top) {
+		TricksterConfig config = TricksterConfig.get();
+		this.addRenderableWidget(toggle(left, top, "groupAttention", () -> config.groupAttention, v -> config.groupAttention = v));
+		this.addRenderableWidget(toggle(right, top, "jukeboxPerformances", () -> config.jukeboxPerformances, v -> config.jukeboxPerformances = v));
+		this.addRenderableWidget(toggle(left, top + ROW_HEIGHT, "jealousOfTricksters", () -> config.jealousOfTricksters, v -> config.jealousOfTricksters = v));
+		this.addRenderableWidget(toggle(right, top + ROW_HEIGHT, "jealousOfPets", () -> config.jealousOfPets, v -> config.jealousOfPets = v));
+		this.addRenderableWidget(Button.builder(Component.translatable("screen.trickster.config.move_meters"),
+			button -> this.minecraft.gui.setScreen(new HudPositionScreen(this))
+		).bounds(left, top + ROW_HEIGHT * 2, COLUMN_WIDTH, 20).build());
+	}
+
+	private void initGeneralPage(int left, int right, int top) {
+		TricksterConfig config = TricksterConfig.get();
 
 		this.addRenderableWidget(slider(left, top, "tameChance", 0.05, 1.0,
 			() -> config.tameChance, v -> config.tameChance = v, v -> Math.round(v * 100) + "%"));
@@ -64,13 +97,6 @@ public class TricksterConfigScreen extends Screen {
 			CustomSoundPack.createFolders();
 			Blaze3D.openPath(CustomSoundPack.DIRECTORY);
 		}).bounds(right, top + ROW_HEIGHT * 7, COLUMN_WIDTH, 20).build());
-
-		int bottom = top + ROW_HEIGHT * 8 + 6;
-		this.addRenderableWidget(Button.builder(Component.translatable("screen.trickster.config.reload_sounds"), button -> {
-			TricksterConfig.save();
-			this.minecraft.reloadResourcePacks();
-		}).bounds(left, bottom, COLUMN_WIDTH, 20).build());
-		this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose()).bounds(right, bottom, COLUMN_WIDTH, 20).build());
 	}
 
 	@Override
