@@ -31,7 +31,7 @@ Adds the Trickster from Dead by Daylight to Minecraft.
   to it. He has six routines (arm pumps, idol pointing, a wave, heart hands, a twirl, and a shuffle) and switches to a
   new one every 8 seconds. His meters pause during the show. Villagers within 16 blocks come to watch, and ones in the front row
   sometimes throw him a tip (usually an emerald, sometimes a flower or a snack) that lands at his feet for you to
-  pick up. Each villager tips at most once per in-game day. The show stops if you walk more than 24 blocks away.
+  pick up. Each villager tips at most once per show (one song on one jukebox). The show stops if you walk more than 24 blocks away.
 - **Posing:** look at him through a spyglass and he strikes a pose (peace sign, star, or pointing at you), switching
   poses every few seconds while you keep watching. Each new pose sets off a camera flash and pink sparkles. Zoom mods
   count too ("Zoom mods make him pose", on by default): the client notices when the camera's field of view drops below
@@ -47,13 +47,15 @@ Adds the Trickster from Dead by Daylight to Minecraft.
 - **Fans everywhere:** villagers are huge fans, so trades are 50% off while your tamed Trickster is within 16 blocks
   of the villager. Pillagers and the rest of a raid get starstruck the first time they see him and just stand there
   staring for 4 seconds instead of attacking. Both can be tuned or turned off in the settings.
-- Every player gets a Trickster spawn egg the first time they join a world (can be turned off).
+- Every player gets a Trickster spawn egg the first time they join a world (can be turned off), plus a NoSpin
+  Lightstick.
 
 ### NoSpin Lightstick
-- Right click to call every Trickster you own within 64 blocks to your side. He stands up if he was sitting and
-  laughs. Not used up.
-- With no Trickster of yours nearby, use it on a block to summon one who is already tamed to you. That uses up the
-  lightstick (except in creative).
+- Every player gets one the first time they join a world. It never runs out.
+- Right click to call every Trickster you own in your dimension to your side, however far away (as long as his chunk
+  is loaded). He stands up if he was sitting and laughs.
+- With no Trickster of yours loaded in your dimension, it summons one who is already tamed to you (at your feet, or
+  on the block you clicked).
 - Recipe: glowstone dust / lime dye / glowstone dust on top, glowstone dust / any music disc / glowstone dust in the
   middle, stick on the bottom.
 

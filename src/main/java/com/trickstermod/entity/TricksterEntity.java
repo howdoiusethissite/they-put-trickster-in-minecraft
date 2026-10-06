@@ -1007,6 +1007,9 @@ public class TricksterEntity extends TamableAnimal {
 		private int scanCooldown;
 		private int ticks;
 		private @Nullable BlockPos stage;
+		/** The current show: one song on one jukebox. Survives the goal being interrupted mid-song. */
+		private long showId;
+		private @Nullable BlockPos showJukebox;
 
 		PerformGoal() {
 			this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
@@ -1033,6 +1036,10 @@ public class TricksterEntity extends TamableAnimal {
 			}
 			this.scanCooldown = 20;
 			this.stage = TricksterEntity.this.findPlayingJukebox(JUKEBOX_RANGE);
+			if (this.stage == null) {
+				// Nothing playing, so the next song starts a new show.
+				this.showJukebox = null;
+			}
 			return this.stage != null;
 		}
 
@@ -1044,6 +1051,10 @@ public class TricksterEntity extends TamableAnimal {
 		@Override
 		public void start() {
 			this.ticks = 0;
+			if (!this.stage.equals(this.showJukebox)) {
+				this.showJukebox = this.stage;
+				this.showId = TricksterEntity.this.random.nextLong();
+			}
 			TricksterEntity.this.freeHands();
 			TricksterEntity.this.laugh();
 		}
@@ -1074,7 +1085,12 @@ public class TricksterEntity extends TamableAnimal {
 				BlockPos playing = self.findPlayingJukebox(JUKEBOX_RANGE);
 				if (playing == null) {
 					this.stage = null;
+					this.showJukebox = null;
 					return;
+				}
+				if (!playing.equals(this.showJukebox)) {
+					this.showJukebox = playing;
+					this.showId = self.random.nextLong();
 				}
 				this.stage = playing;
 			}
@@ -1099,7 +1115,7 @@ public class TricksterEntity extends TamableAnimal {
 				level.sendParticles(ParticleTypes.NOTE, self.getX(), self.getEyeY() + 0.6, self.getZ(), 1, 0.4, 0.2, 0.4, self.random.nextDouble());
 			}
 			if (this.ticks % 40 == 0) {
-				Fans.gatherAudience(level, self);
+				Fans.gatherAudience(level, self, this.showId);
 				if (self.random.nextInt(6) == 0) {
 					self.laugh();
 				}
