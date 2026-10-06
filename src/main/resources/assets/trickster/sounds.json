@@ -37,11 +37,11 @@
   "trickster.annoyed": {
     "subtitle": "subtitles.trickster.trickster.annoyed",
     "sounds": [
-      {
-        "name": "minecraft:entity.villager.no",
-        "type": "event",
-        "pitch": 0.85
-      }
+      "trickster:trickster/annoyed/annoyed1",
+      "trickster:trickster/annoyed/annoyed2",
+      "trickster:trickster/annoyed/annoyed3",
+      "trickster:trickster/annoyed/annoyed4",
+      "trickster:trickster/annoyed/annoyed5"
     ]
   },
   "laceration.warning": {

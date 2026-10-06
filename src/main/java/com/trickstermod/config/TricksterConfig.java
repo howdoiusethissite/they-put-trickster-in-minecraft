@@ -46,6 +46,17 @@ public final class TricksterConfig {
 	public double starstruckSeconds = 4.0;
 	/** Files in config/trickster/sounds replace the built-in sounds (false: they play alongside them). */
 	public boolean customSoundsReplaceDefaults = true;
+	/** Looking at one of your Tricksters keeps every Trickster standing close to him happy too. */
+	public boolean groupAttention = true;
+	/** His attention drains faster while you look at one of your other Tricksters instead of him. */
+	public boolean jealousOfTricksters = false;
+	/** His attention drains faster while you look at one of your other pets (dogs, cats, parrots...). */
+	public boolean jealousOfPets = false;
+	/** Tamed Tricksters dance by playing jukeboxes, and villagers come watch and tip. */
+	public boolean jukeboxPerformances = true;
+	/** Where his meters sit on screen, from 0 (left/top edge) to 1 (right/bottom edge). */
+	public double hudX = 0.0;
+	public double hudY = 0.0;
 
 	public static TricksterConfig get() {
 		return instance;

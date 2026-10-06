@@ -13,10 +13,17 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.behavior.BehaviorUtils;
+import net.minecraft.world.entity.ai.behavior.EntityTracker;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.WalkTarget;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.raid.Raider;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.MerchantOffer;
 import org.jspecify.annotations.Nullable;
 
@@ -27,6 +34,10 @@ import org.jspecify.annotations.Nullable;
 public final class Fans {
 	private static final double VILLAGER_RANGE = 16.0;
 	private static final double STARSTRUCK_RANGE = 20.0;
+	private static final double AUDIENCE_RANGE = 16.0;
+	private static final double TIPPING_RANGE = 6.0;
+	private static final long TICKS_PER_DAY = 24000L;
+	private static final List<Item> SMALL_TIPS = List.of(Items.POPPY, Items.CORNFLOWER, Items.BREAD, Items.COOKIE, Items.APPLE);
 
 	/**
 	 * Game time until which a raider stands there gawking. Its presence also means the raider has already seen
@@ -36,7 +47,45 @@ public final class Fans {
 		.persistent(Codec.LONG)
 		.buildAndRegister(TricksterMod.id("starstruck_until"));
 
+	/** Game time a villager last tipped a performing Trickster. Each villager tips at most once a day. */
+	public static final AttachmentType<Long> LAST_TIP = AttachmentRegistry.<Long>builder()
+		.persistent(Codec.LONG)
+		.buildAndRegister(TricksterMod.id("last_tip"));
+
 	public static void init() {
+	}
+
+	// ---------------------------------------------------------------- jukebox shows
+
+	/**
+	 * Called every couple of seconds while a Trickster dances by a jukebox. Nearby villagers walk over to watch,
+	 * and ones in the front row sometimes throw him a tip: usually an emerald, sometimes a flower or a snack.
+	 */
+	public static void gatherAudience(ServerLevel level, TricksterEntity performer) {
+		List<Villager> villagers = level.getEntitiesOfClass(
+			Villager.class,
+			performer.getBoundingBox().inflate(AUDIENCE_RANGE),
+			villager -> villager.isAlive() && !villager.isSleeping() && !villager.isTrading()
+		);
+		long now = level.getGameTime();
+		for (Villager villager : villagers) {
+			villager.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(performer, 0.6F, 3));
+			villager.getBrain().setMemory(MemoryModuleType.LOOK_TARGET, new EntityTracker(performer, true));
+
+			Long lastTip = villager.getAttached(LAST_TIP);
+			boolean canTip = !villager.isBaby() && (lastTip == null || now - lastTip >= TICKS_PER_DAY);
+			if (canTip && villager.distanceToSqr(performer) < TIPPING_RANGE * TIPPING_RANGE && level.getRandom().nextInt(5) == 0) {
+				villager.setAttached(LAST_TIP, now);
+				ItemStack tip = level.getRandom().nextInt(10) < 6
+					? new ItemStack(Items.EMERALD, 1 + level.getRandom().nextInt(2))
+					: new ItemStack(SMALL_TIPS.get(level.getRandom().nextInt(SMALL_TIPS.size())));
+				BehaviorUtils.throwItem(villager, tip, performer.position());
+				level.playSound(null, villager.getX(), villager.getY(), villager.getZ(), villager.getNotifyTradeSound(), SoundSource.NEUTRAL, 1.0F, 1.0F);
+				level.sendParticles(ParticleTypes.HEART, villager.getX(), villager.getEyeY() + 0.4, villager.getZ(), 2, 0.3, 0.2, 0.3, 0.0);
+			} else if (level.getRandom().nextInt(4) == 0) {
+				level.sendParticles(ParticleTypes.HAPPY_VILLAGER, villager.getX(), villager.getEyeY() + 0.3, villager.getZ(), 2, 0.3, 0.2, 0.3, 0.0);
+			}
+		}
 	}
 
 	// ---------------------------------------------------------------- villagers

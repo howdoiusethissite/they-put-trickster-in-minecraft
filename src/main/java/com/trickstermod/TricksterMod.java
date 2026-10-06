@@ -3,6 +3,7 @@ package com.trickstermod;
 import com.mojang.serialization.Codec;
 import com.trickstermod.config.TricksterConfig;
 import com.trickstermod.entity.TricksterEntity;
+import com.trickstermod.fan.Autographs;
 import com.trickstermod.fan.Fans;
 import com.trickstermod.item.ThrowingKnivesItem;
 import com.trickstermod.laceration.Laceration;
@@ -50,6 +51,7 @@ public class TricksterMod implements ModInitializer {
 		ModItems.init();
 		Laceration.init();
 		Fans.init();
+		Autographs.init();
 
 		PayloadTypeRegistry.clientboundPlay().register(KnifeThrowPayload.TYPE, KnifeThrowPayload.STREAM_CODEC);
 

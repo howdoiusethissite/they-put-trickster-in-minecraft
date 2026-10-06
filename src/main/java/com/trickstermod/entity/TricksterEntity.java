@@ -1,13 +1,19 @@
 package com.trickstermod.entity;
 
 import com.trickstermod.config.TricksterConfig;
+import com.trickstermod.fan.Autographs;
 import com.trickstermod.fan.Fans;
 import com.trickstermod.network.KnifeThrowPayload;
 import com.trickstermod.registry.ModItems;
 import com.trickstermod.registry.ModSounds;
 import java.util.EnumSet;
 import java.util.List;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.JukeboxBlockEntity;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -80,10 +86,18 @@ public class TricksterEntity extends TamableAnimal {
 	);
 	private static final int BORED_TANTRUM_TICKS = 100;
 	private static final double OWNER_METER_RANGE = 32.0;
+	/** With group attention on, watching any Trickster this close to him counts as watching him. */
+	private static final double GROUP_RADIUS = 5.0;
+	private static final float JEALOUS_DRAIN_MULTIPLIER = 3.0F;
+	/** How many different poses {@link PoseGoal} can strike (pose ids are 1..POSE_COUNT, 0 means not posing). */
+	public static final int POSE_COUNT = 3;
 
 	private static final EntityDataAccessor<Float> DATA_BOREDOM = SynchedEntityData.defineId(TricksterEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Float> DATA_ATTENTION = SynchedEntityData.defineId(TricksterEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Byte> DATA_MOOD = SynchedEntityData.defineId(TricksterEntity.class, EntityDataSerializers.BYTE);
+	private static final EntityDataAccessor<Boolean> DATA_JEALOUS = SynchedEntityData.defineId(TricksterEntity.class, EntityDataSerializers.BOOLEAN);
+	private static final EntityDataAccessor<Boolean> DATA_PERFORMING = SynchedEntityData.defineId(TricksterEntity.class, EntityDataSerializers.BOOLEAN);
+	private static final EntityDataAccessor<Byte> DATA_POSE = SynchedEntityData.defineId(TricksterEntity.class, EntityDataSerializers.BYTE);
 
 	public enum Mood {
 		CALM,
@@ -100,6 +114,7 @@ public class TricksterEntity extends TamableAnimal {
 	private int tantrumTicks;
 	private int buffCooldown = 2400 + (int)(Math.random() * 2400);
 	private @Nullable Vec3 lastOwnerPos;
+	private int jealousTicks;
 
 	public TricksterEntity(final EntityType<? extends TricksterEntity> type, final Level level) {
 		super(type, level);
@@ -122,6 +137,9 @@ public class TricksterEntity extends TamableAnimal {
 		entityData.define(DATA_BOREDOM, 0.0F);
 		entityData.define(DATA_ATTENTION, MAX_METER);
 		entityData.define(DATA_MOOD, (byte)Mood.CALM.ordinal());
+		entityData.define(DATA_JEALOUS, false);
+		entityData.define(DATA_PERFORMING, false);
+		entityData.define(DATA_POSE, (byte)0);
 	}
 
 	@Override
@@ -129,10 +147,12 @@ public class TricksterEntity extends TamableAnimal {
 		this.goalSelector.addGoal(1, new FloatGoal(this));
 		this.goalSelector.addGoal(2, new SitWhenOrderedToGoal(this));
 		this.goalSelector.addGoal(3, new MoodGoal());
-		this.goalSelector.addGoal(4, new CombatGoal());
-		this.goalSelector.addGoal(5, new PesterPetGoal());
-		this.goalSelector.addGoal(6, new FollowOwnerGoal(this, 1.0, 10.0F, 2.0F));
-		this.goalSelector.addGoal(8, new WaterAvoidingRandomStrollGoal(this, 0.8));
+		this.goalSelector.addGoal(4, new PoseGoal());
+		this.goalSelector.addGoal(5, new CombatGoal());
+		this.goalSelector.addGoal(6, new PerformGoal());
+		this.goalSelector.addGoal(7, new PesterPetGoal());
+		this.goalSelector.addGoal(8, new FollowOwnerGoal(this, 1.0, 10.0F, 2.0F));
+		this.goalSelector.addGoal(9, new WaterAvoidingRandomStrollGoal(this, 0.8));
 		this.goalSelector.addGoal(10, new LookAtPlayerGoal(this, Player.class, 8.0F));
 		this.goalSelector.addGoal(10, new RandomLookAroundGoal(this));
 		this.targetSelector.addGoal(1, new OwnerHurtByTargetGoal(this));
@@ -154,6 +174,21 @@ public class TricksterEntity extends TamableAnimal {
 
 	public Mood getMood() {
 		return Mood.byId(this.entityData.get(DATA_MOOD));
+	}
+
+	/** True while his attention is draining extra fast because you're looking at another pet. */
+	public boolean isJealous() {
+		return this.entityData.get(DATA_JEALOUS);
+	}
+
+	/** True while he dances by a playing jukebox. */
+	public boolean isPerforming() {
+		return this.entityData.get(DATA_PERFORMING);
+	}
+
+	/** The pose he is striking for a spyglass, 1..{@link #POSE_COUNT}, or 0 when he isn't posing. */
+	public int getPoseId() {
+		return this.entityData.get(DATA_POSE);
 	}
 
 	private void setBoredom(float value) {
@@ -179,19 +214,6 @@ public class TricksterEntity extends TamableAnimal {
 		return null;
 	}
 
-	/** True when the owner's crosshair is roughly on the Trickster and nothing blocks the view. */
-	private boolean isBeingWatchedBy(Player player) {
-		Vec3 view = player.getViewVector(1.0F).normalize();
-		Vec3 toMe = new Vec3(this.getX() - player.getX(), this.getEyeY() - player.getEyeY(), this.getZ() - player.getZ());
-		double distance = toMe.length();
-		if (distance < 1.0E-4) {
-			return true;
-		}
-		// Allow a wider cone when he is close so you don't need pixel-perfect aim.
-		double threshold = 1.0 - 0.12 / Math.max(1.0, distance * 0.25);
-		return view.dot(toMe.scale(1.0 / distance)) > threshold && player.hasLineOfSight(this);
-	}
-
 	private boolean isOwnerActive(ServerPlayer owner) {
 		Vec3 pos = owner.position();
 		boolean moved = this.lastOwnerPos != null && pos.distanceToSqr(this.lastOwnerPos) > 0.0025;
@@ -214,17 +236,36 @@ public class TricksterEntity extends TamableAnimal {
 		if (owner == null) {
 			// Meters pause while he sits, is wild, or his owner is away.
 			this.lastOwnerPos = null;
+			this.setJealous(false);
 			if (this.getMood() == Mood.BORED) {
 				this.setMood(Mood.CALM);
 			}
 			return;
 		}
 
+		if (this.isPerforming()) {
+			// On stage he's having the time of his life: nothing drains, and the show cures boredom.
+			this.setJealous(false);
+			this.setBoredom(this.getBoredom() - BOREDOM_DROP);
+			return;
+		}
+
 		TricksterConfig config = TricksterConfig.get();
+		List<TamableAnimal> watched = OwnerGaze.watchedPets(owner);
+		boolean seen = watched.contains(this) || (config.groupAttention && watched.stream().anyMatch(
+			pet -> pet instanceof TricksterEntity && pet.distanceToSqr(this) < GROUP_RADIUS * GROUP_RADIUS
+		));
+		boolean jealous = !seen && watched.stream().anyMatch(
+			pet -> pet instanceof TricksterEntity ? config.jealousOfTricksters : config.jealousOfPets
+		);
+		this.setJealous(jealous);
+
 		float attentionDrain = MAX_METER / (float)Math.max(1.0, config.attentionDrainSeconds * 20.0);
+		if (jealous) {
+			attentionDrain *= JEALOUS_DRAIN_MULTIPLIER;
+		}
 		float boredomGain = MAX_METER / (float)Math.max(1.0, config.boredomFillSeconds * 20.0);
-		float attention = this.getAttention() + (this.isBeingWatchedBy(owner) ? ATTENTION_GAIN : -attentionDrain);
-		this.setAttention(attention);
+		this.setAttention(this.getAttention() + (seen ? ATTENTION_GAIN : -attentionDrain));
 		float boredom = this.getBoredom() + (this.isOwnerActive(owner) ? -BOREDOM_DROP : boredomGain);
 		this.setBoredom(boredom);
 
@@ -254,6 +295,22 @@ public class TricksterEntity extends TamableAnimal {
 					owner.sendOverlayMessage(Component.translatable("message.trickster.calm"));
 				}
 			}
+		}
+	}
+
+	private void setJealous(boolean jealous) {
+		this.entityData.set(DATA_JEALOUS, jealous);
+		if (!jealous) {
+			this.jealousTicks = 0;
+			return;
+		}
+		// Only sulk out loud once the owner has been looking elsewhere for a second, not on every passing glance.
+		this.jealousTicks++;
+		if (this.jealousTicks == 20) {
+			this.playSound(ModSounds.ANNOYED, 0.8F, 1.1F);
+		}
+		if (this.jealousTicks % 20 == 0 && this.level() instanceof ServerLevel level) {
+			level.sendParticles(ParticleTypes.ANGRY_VILLAGER, this.getX(), this.getEyeY() + 0.5, this.getZ(), 1, 0.2, 0.1, 0.2, 0.0);
 		}
 	}
 
@@ -400,6 +457,13 @@ public class TricksterEntity extends TamableAnimal {
 			return InteractionResult.SUCCESS;
 		}
 
+		if (itemStack.is(Items.WRITABLE_BOOK)) {
+			if (!this.level().isClientSide()) {
+				this.signAutograph(player, itemStack);
+			}
+			return InteractionResult.SUCCESS;
+		}
+
 		InteractionResult result = super.mobInteract(player, hand);
 		if (!result.consumesAction()) {
 			this.setOrderedToSit(!this.isOrderedToSit());
@@ -409,6 +473,21 @@ public class TricksterEntity extends TamableAnimal {
 			return InteractionResult.SUCCESS.withoutItem();
 		}
 		return result;
+	}
+
+	/** He signs a book and quill for his owner, as long as he is in a good mood. */
+	private void signAutograph(Player player, ItemStack book) {
+		if (this.getMood() != Mood.CALM || this.isJealous()) {
+			this.level().broadcastEntityEvent(this, (byte)6);
+			this.playSound(ModSounds.ANNOYED, 1.0F, 1.0F);
+			return;
+		}
+		book.consume(1, player);
+		ItemStack autograph = Autographs.create(player, this.random);
+		player.getInventory().placeItemBackInInventory(autograph, net.minecraft.util.Prediction.SERVER_ONLY);
+		this.playSound(SoundEvents.BOOK_PAGE_TURN, 1.0F, 1.0F);
+		this.laugh();
+		this.level().broadcastEntityEvent(this, (byte)7);
 	}
 
 	private void tryToTame(Player player) {
@@ -440,6 +519,48 @@ public class TricksterEntity extends TamableAnimal {
 		this.snapTo(owner.getX(), owner.getY(), owner.getZ(), this.getYRot(), this.getXRot());
 		this.setAttention(MAX_METER);
 		this.laugh();
+	}
+
+	private void setPerforming(boolean performing) {
+		this.entityData.set(DATA_PERFORMING, performing);
+	}
+
+	private void setPoseId(int pose) {
+		this.entityData.set(DATA_POSE, (byte)pose);
+	}
+
+	/** Puts the bat away so both hands are free for dancing or posing. */
+	private void freeHands() {
+		this.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+		this.setItemSlot(EquipmentSlot.OFFHAND, ItemStack.EMPTY);
+	}
+
+	/** The nearest jukebox within range that is playing a song right now, or null. */
+	private @Nullable BlockPos findPlayingJukebox(double range) {
+		BlockPos center = this.blockPosition();
+		BlockPos best = null;
+		double bestDistance = range * range;
+		int minChunkX = (center.getX() - (int)range) >> 4;
+		int maxChunkX = (center.getX() + (int)range) >> 4;
+		int minChunkZ = (center.getZ() - (int)range) >> 4;
+		int maxChunkZ = (center.getZ() + (int)range) >> 4;
+		for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+			for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
+				if (!this.level().hasChunk(chunkX, chunkZ)) {
+					continue;
+				}
+				for (BlockEntity blockEntity : this.level().getChunk(chunkX, chunkZ).getBlockEntities().values()) {
+					if (blockEntity instanceof JukeboxBlockEntity jukebox && jukebox.getSongPlayer().isPlaying()) {
+						double distance = jukebox.getBlockPos().distSqr(center);
+						if (distance < bestDistance) {
+							bestDistance = distance;
+							best = jukebox.getBlockPos();
+						}
+					}
+				}
+			}
+		}
+		return best;
 	}
 
 	@Override
@@ -756,6 +877,192 @@ public class TricksterEntity extends TamableAnimal {
 				if (--this.actionTimer <= 0 && distance < 2.8 * 2.8) {
 					this.actionTimer = 20;
 					TricksterEntity.this.batOwner(level, owner);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Look at him through a spyglass and he strikes a pose for the camera. He keeps posing (switching poses every
+	 * few seconds) for as long as you keep watching.
+	 */
+	private class PoseGoal extends Goal {
+		private static final int MIN_TICKS = 40;
+		private static final int TICKS_PER_POSE = 60;
+		private static final int LINGER_TICKS = 15;
+
+		private int ticks;
+		private int linger;
+
+		PoseGoal() {
+			this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
+		}
+
+		private boolean calm() {
+			TricksterEntity self = TricksterEntity.this;
+			return self.isTame() && !self.isOrderedToSit() && self.getMood() == Mood.CALM && self.getTarget() == null;
+		}
+
+		private boolean beingPhotographed() {
+			ServerPlayer owner = TricksterEntity.this.getNearbyOwner();
+			return owner != null && owner.isScoping() && OwnerGaze.watchedPets(owner).contains(TricksterEntity.this);
+		}
+
+		@Override
+		public boolean canUse() {
+			return this.calm() && this.beingPhotographed();
+		}
+
+		@Override
+		public boolean canContinueToUse() {
+			return this.calm() && (this.ticks < MIN_TICKS || this.linger > 0);
+		}
+
+		@Override
+		public void start() {
+			TricksterEntity self = TricksterEntity.this;
+			this.ticks = 0;
+			this.linger = LINGER_TICKS;
+			self.getNavigation().stop();
+			self.freeHands();
+			self.setPoseId(1 + self.random.nextInt(POSE_COUNT));
+			if (self.random.nextBoolean()) {
+				self.laugh();
+			}
+		}
+
+		@Override
+		public void stop() {
+			TricksterEntity.this.setPoseId(0);
+			TricksterEntity.this.holdKnives(false);
+		}
+
+		@Override
+		public boolean requiresUpdateEveryTick() {
+			return true;
+		}
+
+		@Override
+		public void tick() {
+			TricksterEntity self = TricksterEntity.this;
+			this.ticks++;
+			this.linger = this.beingPhotographed() ? LINGER_TICKS : this.linger - 1;
+			LivingEntity owner = self.getOwner();
+			if (owner != null) {
+				self.getLookControl().setLookAt(owner, 30.0F, 30.0F);
+			}
+			if (this.ticks % TICKS_PER_POSE == 0) {
+				// New pose, never the same one twice in a row.
+				int next = 1 + (self.getPoseId() + self.random.nextInt(POSE_COUNT - 1)) % POSE_COUNT;
+				self.setPoseId(next);
+			}
+		}
+	}
+
+	/**
+	 * When a jukebox nearby is playing, he walks over and dances next to it. Villagers come to watch and now and
+	 * then throw him a tip, which lands at his feet for his owner to grab.
+	 */
+	private class PerformGoal extends Goal {
+		private static final double JUKEBOX_RANGE = 16.0;
+		private static final double STAGE_DISTANCE = 3.0;
+		private static final double OWNER_LEAVE_DISTANCE = 24.0;
+
+		private int scanCooldown;
+		private int ticks;
+		private @Nullable BlockPos stage;
+
+		PerformGoal() {
+			this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
+		}
+
+		private boolean allowed() {
+			TricksterEntity self = TricksterEntity.this;
+			LivingEntity owner = self.getOwner();
+			// The show ends if his owner walks off, so he doesn't get left behind.
+			return TricksterConfig.get().jukeboxPerformances
+				&& self.isTame()
+				&& !self.isOrderedToSit()
+				&& self.getMood() == Mood.CALM
+				&& self.getTarget() == null
+				&& owner != null
+				&& owner.level() == self.level()
+				&& owner.distanceToSqr(self) < OWNER_LEAVE_DISTANCE * OWNER_LEAVE_DISTANCE;
+		}
+
+		@Override
+		public boolean canUse() {
+			if (!this.allowed() || --this.scanCooldown > 0) {
+				return false;
+			}
+			this.scanCooldown = 20;
+			this.stage = TricksterEntity.this.findPlayingJukebox(JUKEBOX_RANGE);
+			return this.stage != null;
+		}
+
+		@Override
+		public boolean canContinueToUse() {
+			return this.stage != null && this.allowed();
+		}
+
+		@Override
+		public void start() {
+			this.ticks = 0;
+			TricksterEntity.this.freeHands();
+			TricksterEntity.this.laugh();
+		}
+
+		@Override
+		public void stop() {
+			this.stage = null;
+			this.scanCooldown = 20;
+			TricksterEntity.this.setPerforming(false);
+			TricksterEntity.this.holdKnives(false);
+			TricksterEntity.this.getNavigation().stop();
+		}
+
+		@Override
+		public boolean requiresUpdateEveryTick() {
+			return true;
+		}
+
+		@Override
+		public void tick() {
+			TricksterEntity self = TricksterEntity.this;
+			if (this.stage == null || !(self.level() instanceof ServerLevel level)) {
+				return;
+			}
+			this.ticks++;
+			if (this.ticks % 20 == 0) {
+				// The song ended or the jukebox was broken: the show is over.
+				BlockPos playing = self.findPlayingJukebox(JUKEBOX_RANGE);
+				if (playing == null) {
+					this.stage = null;
+					return;
+				}
+				this.stage = playing;
+			}
+
+			double distance = self.distanceToSqr(this.stage.getX() + 0.5, this.stage.getY(), this.stage.getZ() + 0.5);
+			if (distance > STAGE_DISTANCE * STAGE_DISTANCE) {
+				self.setPerforming(false);
+				self.getNavigation().moveTo(this.stage.getX() + 0.5, this.stage.getY(), this.stage.getZ() + 0.5, 1.1);
+				return;
+			}
+
+			self.getNavigation().stop();
+			self.setPerforming(true);
+			LivingEntity owner = self.getOwner();
+			if (owner != null && owner.distanceToSqr(self) < 16.0 * 16.0) {
+				self.getLookControl().setLookAt(owner, 10.0F, 10.0F);
+			}
+			if (this.ticks % 12 == 0) {
+				level.sendParticles(ParticleTypes.NOTE, self.getX(), self.getEyeY() + 0.6, self.getZ(), 1, 0.4, 0.2, 0.4, self.random.nextDouble());
+			}
+			if (this.ticks % 40 == 0) {
+				Fans.gatherAudience(level, self);
+				if (self.random.nextInt(6) == 0) {
+					self.laugh();
 				}
 			}
 		}

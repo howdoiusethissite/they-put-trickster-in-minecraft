@@ -22,6 +22,11 @@ public final class ModComponents {
 		"knives_left_hand_next", DataComponentType.<Boolean>builder().persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL)
 	);
 
+	/** Marks a written book the Trickster signed himself (as opposed to one a player wrote). */
+	public static final DataComponentType<Boolean> AUTOGRAPH = register(
+		"autograph", DataComponentType.<Boolean>builder().persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL)
+	);
+
 	private static <T> DataComponentType<T> register(String name, DataComponentType.Builder<T> builder) {
 		return Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, TricksterMod.id(name), builder.build());
 	}

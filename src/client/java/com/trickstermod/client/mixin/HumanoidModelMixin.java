@@ -1,6 +1,7 @@
 package com.trickstermod.client.mixin;
 
 import com.trickstermod.client.render.ThirdPersonThrows;
+import com.trickstermod.client.render.TricksterAnimations;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
@@ -12,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Overhand knife throw in third person, for players and the Trickster alike. */
+/** Overhand knife throw in third person, for players and the Trickster alike, plus the Trickster's dances and poses. */
 @Mixin(HumanoidModel.class)
 public abstract class HumanoidModelMixin {
 	private static final float RAISED = -2.75F;
@@ -26,8 +27,26 @@ public abstract class HumanoidModelMixin {
 	@Final
 	public ModelPart leftArm;
 
+	@Shadow
+	@Final
+	public ModelPart head;
+
+	@Shadow
+	@Final
+	public ModelPart rightLeg;
+
+	@Shadow
+	@Final
+	public ModelPart leftLeg;
+
 	@Inject(method = "setupAnim(Lnet/minecraft/client/renderer/entity/state/HumanoidRenderState;)V", at = @At("TAIL"))
 	private void trickster$throwPose(final HumanoidRenderState state, final CallbackInfo ci) {
+		Integer trickPose = state.getData(TricksterAnimations.POSE);
+		if (trickPose != null && trickPose > 0) {
+			TricksterAnimations.pose(trickPose, this.head, this.rightArm, this.leftArm);
+		} else if (Boolean.TRUE.equals(state.getData(TricksterAnimations.DANCING))) {
+			TricksterAnimations.dance(state.ageInTicks, this.head, this.rightArm, this.leftArm, this.rightLeg, this.leftLeg);
+		}
 		Float right = state.getData(ThirdPersonThrows.RIGHT_PROGRESS);
 		Float left = state.getData(ThirdPersonThrows.LEFT_PROGRESS);
 		if (right != null && right >= 0.0F) {
