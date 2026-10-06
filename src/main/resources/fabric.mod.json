@@ -1,0 +1,37 @@
+{
+	"schemaVersion": 1,
+	"id": "trickster",
+	"version": "${version}",
+	"name": "The Trickster",
+	"description": "Adds the Trickster from Dead by Daylight: a tameable mob with a bat, throwing knives, laceration, and boredom/attention meters.",
+	"authors": [
+		"howdoiusethissite"
+	],
+	"contact": {
+		"sources": "https://github.com/howdoiusethissite/they-put-trickster-in-minecraft"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/trickster/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.trickstermod.TricksterMod"
+		],
+		"client": [
+			"com.trickstermod.client.TricksterModClient"
+		]
+	},
+	"mixins": [
+		"trickster.mixins.json",
+		{
+			"config": "trickster.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}

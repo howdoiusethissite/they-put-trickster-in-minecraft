@@ -1,0 +1,172 @@
+package com.trickstermod.item;
+
+import com.trickstermod.entity.ThrownKnife;
+import com.trickstermod.registry.ModComponents;
+import com.trickstermod.registry.ModItems;
+import java.util.function.Consumer;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+
+/**
+ * The Trickster's knives. Hold right click to fire, alternating hands every knife.
+ * When the magazine is empty, right click reloads from the reserve.
+ */
+public class ThrowingKnivesItem extends Item {
+	public static final int MAGAZINE_SIZE = 28;
+	public static final int STARTING_RESERVE = 60;
+	public static final int MAX_RESERVE = 60;
+	public static final int RELOAD_TICKS = 40;
+	public static final float KNIFE_DAMAGE = 2.0F;
+	public static final float KNIFE_SPEED = 2.6F;
+	private static final double AIM_RANGE = 48.0;
+
+	/** Set by the client so the first-person view can animate the correct arm. Never called on a dedicated server. */
+	public static Consumer<HumanoidArm> clientThrowListener = arm -> {};
+	public static Runnable clientReloadListener = () -> {};
+
+	public ThrowingKnivesItem(final Item.Properties properties) {
+		super(properties);
+	}
+
+	public static int getLoaded(ItemStack stack) {
+		return stack.getOrDefault(ModComponents.KNIVES_LOADED, 0);
+	}
+
+	public static int getReserve(ItemStack stack) {
+		return stack.getOrDefault(ModComponents.KNIVES_RESERVE, 0);
+	}
+
+	@Override
+	public InteractionResult use(final Level level, final Player player, final InteractionHand hand) {
+		ItemStack stack = player.getItemInHand(hand);
+		int loaded = getLoaded(stack);
+
+		if (loaded <= 0) {
+			return this.reload(level, player, stack);
+		}
+
+		boolean leftHand = stack.getOrDefault(ModComponents.KNIVES_LEFT_HAND_NEXT, false);
+		HumanoidArm arm = leftHand ? HumanoidArm.LEFT : HumanoidArm.RIGHT;
+
+		if (level instanceof ServerLevel serverLevel) {
+			ThrownKnife knife = new ThrownKnife(serverLevel, player);
+			knife.setKnifeDamage(KNIFE_DAMAGE);
+			// Start the knife from the throwing hand rather than the middle of the face.
+			Vec3 look = player.getLookAngle();
+			Vec3 right = new Vec3(-look.z, 0.0, look.x).normalize();
+			double side = arm == HumanoidArm.RIGHT ? 0.3 : -0.3;
+			knife.setPos(knife.getX() + right.x * side, knife.getY() - 0.1, knife.getZ() + right.z * side);
+			// Aim from the hand at whatever is under the crosshair so both hands converge on it.
+			Vec3 aim = findAimPoint(player).subtract(knife.position());
+			knife.shoot(aim.x, aim.y, aim.z, KNIFE_SPEED, 0.6F);
+			if (player.hasInfiniteMaterials()) {
+				knife.pickup = ThrownKnife.Pickup.CREATIVE_ONLY;
+			}
+			serverLevel.addFreshEntity(knife);
+			// Other players see the matching arm swing in third person.
+			InteractionHand swingHand = arm == player.getMainArm() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+			player.swing(swingHand, stack.getAttackAnimation(), false);
+		} else {
+			clientThrowListener.accept(arm);
+		}
+
+		level.playSound(
+			null, player.getX(), player.getY(), player.getZ(),
+			SoundEvents.TRIDENT_THROW.value(), SoundSource.PLAYERS, 0.5F, 1.6F + level.getRandom().nextFloat() * 0.3F
+		);
+		stack.set(ModComponents.KNIVES_LOADED, loaded - 1);
+		stack.set(ModComponents.KNIVES_LEFT_HAND_NEXT, !leftHand);
+		return InteractionResult.CONSUME;
+	}
+
+	private InteractionResult reload(final Level level, final Player player, final ItemStack stack) {
+		int reserve = getReserve(stack);
+		boolean infinite = player.hasInfiniteMaterials();
+		if (reserve <= 0 && !infinite) {
+			level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.DISPENSER_FAIL, SoundSource.PLAYERS, 0.6F, 1.4F);
+			return InteractionResult.FAIL;
+		}
+
+		int amount = infinite ? MAGAZINE_SIZE : Math.min(MAGAZINE_SIZE, reserve);
+		stack.set(ModComponents.KNIVES_LOADED, amount);
+		if (!infinite) {
+			stack.set(ModComponents.KNIVES_RESERVE, reserve - amount);
+		}
+		stack.set(ModComponents.KNIVES_LEFT_HAND_NEXT, false);
+		player.getCooldowns().addCooldown(stack, RELOAD_TICKS);
+		level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.ARMOR_EQUIP_CHAIN.value(), SoundSource.PLAYERS, 1.0F, 1.2F);
+		if (level.isClientSide()) {
+			clientReloadListener.run();
+		}
+		return InteractionResult.CONSUME;
+	}
+
+	private static Vec3 findAimPoint(Player player) {
+		Vec3 eye = player.getEyePosition();
+		Vec3 end = eye.add(player.getLookAngle().scale(AIM_RANGE));
+		HitResult blockHit = player.pick(AIM_RANGE, 1.0F, false);
+		if (blockHit.getType() != HitResult.Type.MISS) {
+			end = blockHit.getLocation();
+		}
+		AABB searchArea = player.getBoundingBox().expandTowards(end.subtract(eye)).inflate(1.0);
+		EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(
+			player, eye, end, searchArea, entity -> !entity.isSpectator() && entity.isPickable(), eye.distanceToSqr(end)
+		);
+		return entityHit != null ? entityHit.getEntity().getBoundingBox().getCenter() : end;
+	}
+
+	/** Puts one picked-up knife back into the reserve of the first knife pack that has room. */
+	public static boolean returnKnifeToInventory(Player player) {
+		Inventory inventory = player.getInventory();
+		for (int i = 0; i < inventory.getContainerSize(); i++) {
+			ItemStack stack = inventory.getItem(i);
+			if (stack.is(ModItems.THROWING_KNIVES) && getReserve(stack) < MAX_RESERVE) {
+				stack.set(ModComponents.KNIVES_RESERVE, getReserve(stack) + 1);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public boolean isBarVisible(final ItemStack stack) {
+		return true;
+	}
+
+	@Override
+	public int getBarWidth(final ItemStack stack) {
+		return Math.round(13.0F * getLoaded(stack) / MAGAZINE_SIZE);
+	}
+
+	@Override
+	public int getBarColor(final ItemStack stack) {
+		return getLoaded(stack) > 0 ? 0xFF4FA3 : 0x7A7A7A;
+	}
+
+	@Override
+	public void appendHoverText(
+		final ItemStack stack, final Item.TooltipContext context, final TooltipDisplay display, final Consumer<Component> builder, final TooltipFlag flag
+	) {
+		builder.accept(Component.translatable("item.trickster.throwing_knives.loaded", getLoaded(stack), MAGAZINE_SIZE).withStyle(ChatFormatting.LIGHT_PURPLE));
+		builder.accept(Component.translatable("item.trickster.throwing_knives.reserve", getReserve(stack)).withStyle(ChatFormatting.GRAY));
+		builder.accept(Component.translatable("item.trickster.throwing_knives.hint").withStyle(ChatFormatting.DARK_GRAY));
+	}
+}

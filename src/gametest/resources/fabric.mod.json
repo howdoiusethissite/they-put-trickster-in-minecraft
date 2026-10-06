@@ -1,0 +1,15 @@
+{
+	"schemaVersion": 1,
+	"id": "trickster-gametest",
+	"version": "1.0.0",
+	"name": "Trickster client game tests",
+	"environment": "*",
+	"entrypoints": {
+		"fabric-client-gametest": [
+			"com.trickstermod.gametest.TricksterScreenshotTest"
+		]
+	},
+	"depends": {
+		"trickster": "*"
+	}
+}

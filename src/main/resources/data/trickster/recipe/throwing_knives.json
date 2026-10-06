@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "S": "minecraft:stick",
+    "P": "minecraft:pink_dye"
+  },
+  "pattern": [
+    " I ",
+    "IPI",
+    " S "
+  ],
+  "result": {
+    "id": "trickster:throwing_knives"
+  }
+}
