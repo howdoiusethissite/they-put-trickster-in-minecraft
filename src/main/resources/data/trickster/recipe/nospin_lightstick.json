@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": "minecraft:glowstone_dust",
+    "L": "minecraft:lime_dye",
+    "D": "#minecraft:creeper_drop_music_discs",
+    "S": "minecraft:stick"
+  },
+  "pattern": [
+    "GLG",
+    "GDG",
+    " S "
+  ],
+  "result": {
+    "id": "trickster:nospin_lightstick"
+  }
+}

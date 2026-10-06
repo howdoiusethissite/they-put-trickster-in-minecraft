@@ -2,6 +2,7 @@ package com.trickstermod.registry;
 
 import com.trickstermod.TricksterMod;
 import com.trickstermod.item.HeadSmasherItem;
+import com.trickstermod.item.NoSpinLightstickItem;
 import com.trickstermod.item.ThrowingKnivesItem;
 import java.util.function.Function;
 import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
@@ -25,7 +26,6 @@ public final class ModItems {
 			.stacksTo(1)
 			.rarity(Rarity.UNCOMMON)
 			.component(ModComponents.KNIVES_LOADED, ThrowingKnivesItem.MAGAZINE_SIZE)
-			.component(ModComponents.KNIVES_RESERVE, ThrowingKnivesItem.STARTING_RESERVE)
 			.component(ModComponents.KNIVES_LEFT_HAND_NEXT, false)
 	);
 	/** A single knife. Only used to render knives in flight and in the Trickster's hands. */
@@ -37,6 +37,10 @@ public final class ModItems {
 	);
 	public static final Item TRICKSTER_SPAWN_EGG = register(
 		"trickster_spawn_egg", SpawnEggItem::new, new Item.Properties().spawnEgg(ModEntities.TRICKSTER)
+	);
+
+	public static final Item NOSPIN_LIGHTSTICK = register(
+		"nospin_lightstick", NoSpinLightstickItem::new, new Item.Properties().stacksTo(1).rarity(Rarity.RARE)
 	);
 
 	public static final ResourceKey<CreativeModeTab> TAB_KEY = ResourceKey.create(Registries.CREATIVE_MODE_TAB, TricksterMod.id("trickster"));
@@ -57,6 +61,7 @@ public final class ModItems {
 					output.accept(new ItemStack(THROWING_KNIVES));
 					output.accept(new ItemStack(POLISHED_HEAD_SMASHER));
 					output.accept(new ItemStack(TRICKSTER_SPAWN_EGG));
+					output.accept(new ItemStack(NOSPIN_LIGHTSTICK));
 				})
 				.build()
 		);

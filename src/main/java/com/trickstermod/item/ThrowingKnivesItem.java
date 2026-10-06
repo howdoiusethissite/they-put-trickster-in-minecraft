@@ -13,12 +13,10 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.HumanoidArm;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -33,12 +31,10 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * The Trickster's knives. Hold right click to fire, alternating hands every knife.
- * When the magazine is empty, right click reloads from the reserve.
+ * When the magazine is empty, right click reloads. The pack never runs out of spare knives.
  */
 public class ThrowingKnivesItem extends Item {
 	public static final int MAGAZINE_SIZE = 28;
-	public static final int STARTING_RESERVE = 60;
-	public static final int MAX_RESERVE = 60;
 	public static final int RELOAD_TICKS = 40;
 	public static final float KNIFE_SPEED = 2.6F;
 	private static final double AIM_RANGE = 48.0;
@@ -56,10 +52,6 @@ public class ThrowingKnivesItem extends Item {
 
 	public static int getLoaded(ItemStack stack) {
 		return stack.getOrDefault(ModComponents.KNIVES_LOADED, 0);
-	}
-
-	public static int getReserve(ItemStack stack) {
-		return stack.getOrDefault(ModComponents.KNIVES_RESERVE, 0);
 	}
 
 	@Override
@@ -85,9 +77,8 @@ public class ThrowingKnivesItem extends Item {
 			// Aim from the hand at whatever is under the crosshair so both hands converge on it.
 			Vec3 aim = findAimPoint(player).subtract(knife.position());
 			knife.shoot(aim.x, aim.y, aim.z, KNIFE_SPEED, 0.6F);
-			if (player.hasInfiniteMaterials()) {
-				knife.pickup = ThrownKnife.Pickup.CREATIVE_ONLY;
-			}
+			// The pack is bottomless, so thrown knives just vanish shortly after landing.
+			knife.pickup = ThrownKnife.Pickup.DISALLOWED;
 			serverLevel.addFreshEntity(knife);
 			// Everyone (including the thrower in third person) plays the overhand throw on the matching arm.
 			KnifeThrowPayload.broadcast(player, arm);
@@ -105,18 +96,7 @@ public class ThrowingKnivesItem extends Item {
 	}
 
 	private InteractionResult reload(final Level level, final Player player, final ItemStack stack) {
-		int reserve = getReserve(stack);
-		boolean infinite = player.hasInfiniteMaterials();
-		if (reserve <= 0 && !infinite) {
-			level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.DISPENSER_FAIL, SoundSource.PLAYERS, 0.6F, 1.4F);
-			return InteractionResult.FAIL;
-		}
-
-		int amount = infinite ? MAGAZINE_SIZE : Math.min(MAGAZINE_SIZE, reserve);
-		stack.set(ModComponents.KNIVES_LOADED, amount);
-		if (!infinite) {
-			stack.set(ModComponents.KNIVES_RESERVE, reserve - amount);
-		}
+		stack.set(ModComponents.KNIVES_LOADED, MAGAZINE_SIZE);
 		stack.set(ModComponents.KNIVES_LEFT_HAND_NEXT, false);
 		player.getCooldowns().addCooldown(stack, RELOAD_TICKS);
 		level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.KNIFE_RELOAD, SoundSource.PLAYERS, 1.0F, 1.0F);
@@ -149,19 +129,6 @@ public class ThrowingKnivesItem extends Item {
 		}
 	}
 
-	/** Puts one picked-up knife back into the reserve of the first knife pack that has room. */
-	public static boolean returnKnifeToInventory(Player player) {
-		Inventory inventory = player.getInventory();
-		for (int i = 0; i < inventory.getContainerSize(); i++) {
-			ItemStack stack = inventory.getItem(i);
-			if (stack.is(ModItems.THROWING_KNIVES) && getReserve(stack) < MAX_RESERVE) {
-				stack.set(ModComponents.KNIVES_RESERVE, getReserve(stack) + 1);
-				return true;
-			}
-		}
-		return false;
-	}
-
 	@Override
 	public boolean isBarVisible(final ItemStack stack) {
 		return true;
@@ -182,7 +149,6 @@ public class ThrowingKnivesItem extends Item {
 		final ItemStack stack, final Item.TooltipContext context, final TooltipDisplay display, final Consumer<Component> builder, final TooltipFlag flag
 	) {
 		builder.accept(Component.translatable("item.trickster.throwing_knives.loaded", getLoaded(stack), MAGAZINE_SIZE).withStyle(ChatFormatting.LIGHT_PURPLE));
-		builder.accept(Component.translatable("item.trickster.throwing_knives.reserve", getReserve(stack)).withStyle(ChatFormatting.GRAY));
 		builder.accept(Component.translatable("item.trickster.throwing_knives.hint").withStyle(ChatFormatting.DARK_GRAY));
 	}
 }

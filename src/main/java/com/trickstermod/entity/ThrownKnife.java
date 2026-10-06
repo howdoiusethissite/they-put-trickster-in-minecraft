@@ -1,6 +1,5 @@
 package com.trickstermod.entity;
 
-import com.trickstermod.item.ThrowingKnivesItem;
 import com.trickstermod.laceration.Laceration;
 import com.trickstermod.registry.ModEntities;
 import com.trickstermod.registry.ModItems;
@@ -22,8 +21,8 @@ import net.minecraft.world.phys.EntityHitResult;
 
 public class ThrownKnife extends AbstractArrow {
 	private static final float DEFAULT_DAMAGE = 2.0F;
-	/** Knives the Trickster throws vanish soon after landing so they don't litter the world. */
-	private static final int MOB_KNIFE_GROUND_LIFE = 40;
+	/** Knives vanish soon after landing so they don't litter the world (the packs never run out anyway). */
+	private static final int GROUND_LIFE = 40;
 
 	private float knifeDamage = DEFAULT_DAMAGE;
 	private boolean lethal = true;
@@ -59,7 +58,7 @@ public class ThrownKnife extends AbstractArrow {
 	@Override
 	public void tick() {
 		super.tick();
-		if (this.pickup == Pickup.DISALLOWED && this.inGroundTime > MOB_KNIFE_GROUND_LIFE) {
+		if (this.inGroundTime > GROUND_LIFE) {
 			this.discard();
 		}
 	}
@@ -101,14 +100,8 @@ public class ThrownKnife extends AbstractArrow {
 
 	@Override
 	protected boolean tryPickup(final Player player) {
-		if (this.pickup == Pickup.DISALLOWED) {
-			return false;
-		}
-		if (player.hasInfiniteMaterials()) {
-			return true;
-		}
-		// Picking a knife back up refills the reserve of a knife pack instead of giving a loose item.
-		return ThrowingKnivesItem.returnKnifeToInventory(player);
+		// Knives can't be picked up; this also covers ones that were still lying around from older versions.
+		return false;
 	}
 
 	@Override

@@ -6,61 +6,102 @@
       "trickster:trickster/laugh/laugh2",
       "trickster:trickster/laugh/laugh3",
       "trickster:trickster/laugh/laugh4",
-      "trickster:trickster/laugh/laugh5"
+      "trickster:trickster/laugh/laugh5",
+      "trickster:trickster/laugh/laugh6",
+      "trickster:trickster/laugh/laugh7",
+      "trickster:trickster/laugh/laugh8",
+      "trickster:trickster/laugh/laugh9",
+      "trickster:trickster/laugh/laugh10",
+      "trickster:trickster/laugh/laugh11",
+      "trickster:trickster/laugh/laugh12",
+      "trickster:trickster/laugh/laugh13",
+      "trickster:trickster/laugh/laugh14",
+      "trickster:trickster/laugh/laugh15"
     ]
   },
   "trickster.idle": {
     "subtitle": "subtitles.trickster.trickster.idle",
     "sounds": [
-      {"name": "minecraft:entity.witch.ambient", "type": "event", "pitch": 1.3}
+      "trickster:trickster/idle/idle1",
+      "trickster:trickster/idle/idle2",
+      "trickster:trickster/idle/idle3",
+      "trickster:trickster/idle/idle4",
+      "trickster:trickster/idle/idle5",
+      "trickster:trickster/idle/idle6",
+      "trickster:trickster/idle/idle7",
+      "trickster:trickster/idle/idle8",
+      "trickster:trickster/idle/idle9",
+      "trickster:trickster/idle/idle10"
     ]
   },
   "trickster.annoyed": {
     "subtitle": "subtitles.trickster.trickster.annoyed",
     "sounds": [
-      {"name": "minecraft:entity.villager.no", "type": "event", "pitch": 0.85}
+      {
+        "name": "minecraft:entity.villager.no",
+        "type": "event",
+        "pitch": 0.85
+      }
     ]
   },
   "laceration.warning": {
     "subtitle": "subtitles.trickster.laceration.warning",
     "sounds": [
-      {"name": "minecraft:block.note_block.pling", "type": "event", "pitch": 0.7}
+      "trickster:laceration/warning/warning1"
     ]
   },
   "laceration.max": {
     "subtitle": "subtitles.trickster.laceration.max",
     "sounds": [
-      {"name": "minecraft:entity.player.attack.crit", "type": "event", "pitch": 0.6, "volume": 1.2}
+      "trickster:laceration/max/max1"
     ]
   },
   "knife.throw": {
     "subtitle": "subtitles.trickster.knife.throw",
     "sounds": [
-      {"name": "minecraft:item.trident.throw", "type": "event", "pitch": 1.6}
+      "trickster:knife/throw/throw1",
+      "trickster:knife/throw/throw2",
+      "trickster:knife/throw/throw3",
+      "trickster:knife/throw/throw4",
+      "trickster:knife/throw/throw5",
+      "trickster:knife/throw/throw6"
     ]
   },
   "knife.hit_flesh": {
     "subtitle": "subtitles.trickster.knife.hit_flesh",
     "sounds": [
-      {"name": "minecraft:item.trident.hit", "type": "event", "pitch": 1.6}
+      "trickster:knife/hit_flesh/hit_flesh1",
+      "trickster:knife/hit_flesh/hit_flesh2",
+      "trickster:knife/hit_flesh/hit_flesh3",
+      "trickster:knife/hit_flesh/hit_flesh4",
+      "trickster:knife/hit_flesh/hit_flesh5",
+      "trickster:knife/hit_flesh/hit_flesh6",
+      "trickster:knife/hit_flesh/hit_flesh7",
+      "trickster:knife/hit_flesh/hit_flesh8",
+      "trickster:knife/hit_flesh/hit_flesh9",
+      "trickster:knife/hit_flesh/hit_flesh10"
     ]
   },
   "knife.hit_block": {
     "subtitle": "subtitles.trickster.knife.hit_block",
     "sounds": [
-      {"name": "minecraft:item.trident.hit_ground", "type": "event", "pitch": 1.4}
+      "trickster:knife/hit_block/hit_block1",
+      "trickster:knife/hit_block/hit_block2",
+      "trickster:knife/hit_block/hit_block3",
+      "trickster:knife/hit_block/hit_block4",
+      "trickster:knife/hit_block/hit_block5"
     ]
   },
   "knife.reload": {
     "subtitle": "subtitles.trickster.knife.reload",
     "sounds": [
-      {"name": "minecraft:item.armor.equip_chain", "type": "event", "pitch": 1.2}
+      "trickster:knife/reload/reload1"
     ]
   },
   "knife.draw": {
     "subtitle": "subtitles.trickster.knife.draw",
     "sounds": [
-      {"name": "minecraft:item.crossbow.loading_end", "type": "event", "pitch": 1.5}
+      "trickster:knife/draw/draw1"
     ]
   }
 }

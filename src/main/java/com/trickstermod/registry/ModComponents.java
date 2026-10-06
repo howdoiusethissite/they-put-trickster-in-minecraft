@@ -13,7 +13,7 @@ public final class ModComponents {
 	public static final DataComponentType<Integer> KNIVES_LOADED = register(
 		"knives_loaded", DataComponentType.<Integer>builder().persistent(ExtraCodecs.NON_NEGATIVE_INT).networkSynchronized(ByteBufCodecs.VAR_INT)
 	);
-	/** Spare knives used when reloading. */
+	/** Spare knives from before the packs became bottomless. Unused, but still registered so old saves load. */
 	public static final DataComponentType<Integer> KNIVES_RESERVE = register(
 		"knives_reserve", DataComponentType.<Integer>builder().persistent(ExtraCodecs.NON_NEGATIVE_INT).networkSynchronized(ByteBufCodecs.VAR_INT)
 	);

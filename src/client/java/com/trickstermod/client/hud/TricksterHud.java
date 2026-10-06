@@ -73,7 +73,6 @@ public final class TricksterHud {
 		GuiGraphicsExtractor graphics, Font font, LocalPlayer player, ItemStack held, int width, int height, float partialTicks
 	) {
 		int loaded = ThrowingKnivesItem.getLoaded(held);
-		int reserve = ThrowingKnivesItem.getReserve(held);
 		int perRow = ThrowingKnivesItem.MAGAZINE_SIZE / 2;
 		int x = width / 2 + 98;
 		int y = height - 22;
@@ -87,17 +86,14 @@ public final class TricksterHud {
 			int top = y + row * 6;
 			graphics.fill(left, top, left + 2, top + 5, i < loaded ? PINK : DARK);
 		}
-		graphics.text(font, loaded + " | " + reserve, x, y - 12, WHITE);
+		graphics.text(font, loaded + " / " + ThrowingKnivesItem.MAGAZINE_SIZE, x, y - 12, WHITE);
 
 		float reload = player.getCooldowns().getCooldownPercent(held, partialTicks);
 		if (reload > 0.0F) {
 			graphics.centeredText(font, Component.translatable("hud.trickster.reloading"), width / 2, height - 62, GRAY);
 		} else if (loaded <= 0) {
 			boolean blink = (player.tickCount / 8) % 2 == 0;
-			Component message = reserve > 0 || player.hasInfiniteMaterials()
-				? Component.translatable("hud.trickster.reload")
-				: Component.translatable("hud.trickster.no_knives");
-			graphics.centeredText(font, message, width / 2, height - 62, blink ? PINK : WHITE);
+			graphics.centeredText(font, Component.translatable("hud.trickster.reload"), width / 2, height - 62, blink ? PINK : WHITE);
 		}
 	}
 

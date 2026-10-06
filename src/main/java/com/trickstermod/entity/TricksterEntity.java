@@ -413,18 +413,33 @@ public class TricksterEntity extends TamableAnimal {
 
 	private void tryToTame(Player player) {
 		if (this.random.nextDouble() < TricksterConfig.get().tameChance) {
-			this.tame(player);
-			this.navigation.stop();
-			this.setTarget(null);
-			this.holdKnives(false);
-			this.setAttention(MAX_METER);
-			this.setBoredom(0.0F);
-			this.setMood(Mood.CALM);
-			this.level().broadcastEntityEvent(this, (byte)7);
+			this.becomeFanOf(player);
 		} else {
 			this.level().broadcastEntityEvent(this, (byte)6);
 			this.playSound(ModSounds.ANNOYED, 1.0F, 1.0F);
 		}
+	}
+
+	/** Tames him to this player with full meters, as if a disc had just won him over. */
+	public void becomeFanOf(Player player) {
+		this.tame(player);
+		this.navigation.stop();
+		this.setTarget(null);
+		this.holdKnives(false);
+		this.setAttention(MAX_METER);
+		this.setBoredom(0.0F);
+		this.setMood(Mood.CALM);
+		this.level().broadcastEntityEvent(this, (byte)7);
+	}
+
+	/** Brings him to the owner's side (the NoSpin lightstick), standing him up if he was sitting. */
+	public void answerCall(Player owner) {
+		this.setOrderedToSit(false);
+		this.navigation.stop();
+		this.setTarget(null);
+		this.snapTo(owner.getX(), owner.getY(), owner.getZ(), this.getYRot(), this.getXRot());
+		this.setAttention(MAX_METER);
+		this.laugh();
 	}
 
 	@Override
