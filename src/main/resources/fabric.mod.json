@@ -19,6 +19,9 @@
 		],
 		"client": [
 			"com.trickstermod.client.TricksterModClient"
+		],
+		"modmenu": [
+			"com.trickstermod.client.config.ModMenuIntegration"
 		]
 	},
 	"mixins": [
@@ -33,5 +36,8 @@
 		"minecraft": "~26.3",
 		"java": ">=25",
 		"fabric-api": "*"
+	},
+	"suggests": {
+		"modmenu": "*"
 	}
 }

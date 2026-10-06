@@ -24,5 +24,20 @@
   "hud.trickster.mood.angry": "Ignored! Look at him!",
   "message.trickster.bored": "The Trickster is bored. Time for some target practice...",
   "message.trickster.angry": "The Trickster feels ignored!",
-  "message.trickster.calm": "The Trickster has calmed down."
+  "message.trickster.calm": "The Trickster has calmed down.",
+  "message.trickster.buff": "The Trickster cackles and hands you %s!",
+  "subtitles.trickster.laugh": "Trickster laughs",
+  "key.trickster.open_config": "Open Trickster settings",
+  "screen.trickster.config": "The Trickster: Settings",
+  "screen.trickster.config.restart": "Natural spawning changes apply after a restart.",
+  "option.trickster.tameChance": "Tame chance per disc",
+  "option.trickster.giveSpawnEggOnJoin": "Spawn egg on first join",
+  "option.trickster.playerKnifeDamage": "Your knife damage",
+  "option.trickster.tricksterKnifeDamage": "His knife damage",
+  "option.trickster.boredomFillSeconds": "Boredom fills in",
+  "option.trickster.attentionDrainSeconds": "Attention runs out in",
+  "option.trickster.naturalSpawning": "Natural spawning",
+  "option.trickster.defendOwner": "Fights hostile mobs near you",
+  "option.trickster.pesterPets": "Pesters your other pets",
+  "option.trickster.laughBuffs": "Laughs and gives buffs"
 }

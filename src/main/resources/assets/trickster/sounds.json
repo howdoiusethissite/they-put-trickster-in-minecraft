@@ -1,0 +1,12 @@
+{
+  "laugh": {
+    "subtitle": "subtitles.trickster.laugh",
+    "sounds": [
+      {
+        "name": "minecraft:entity.witch.celebrate",
+        "type": "event",
+        "pitch": 1.35
+      }
+    ]
+  }
+}

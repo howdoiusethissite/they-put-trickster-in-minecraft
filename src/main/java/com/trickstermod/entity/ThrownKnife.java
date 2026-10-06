@@ -22,8 +22,6 @@ import net.minecraft.world.phys.EntityHitResult;
 
 public class ThrownKnife extends AbstractArrow {
 	private static final float DEFAULT_DAMAGE = 2.0F;
-	/** Damage per knife when the Trickster throws at something he means to kill. */
-	public static final float MOB_KNIFE_DAMAGE = 2.5F;
 	/** Knives the Trickster throws vanish soon after landing so they don't litter the world. */
 	private static final int MOB_KNIFE_GROUND_LIFE = 40;
 

@@ -82,6 +82,9 @@ public final class Laceration {
 			);
 			target.removeAttached(ATTACHMENT);
 			target.hurtServer(level, source, Float.MAX_VALUE);
+			if (attacker instanceof com.trickstermod.entity.TricksterEntity trickster) {
+				trickster.laugh();
+			}
 		}
 	}
 

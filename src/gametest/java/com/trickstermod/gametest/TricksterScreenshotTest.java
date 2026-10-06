@@ -33,6 +33,8 @@ public class TricksterScreenshotTest implements FabricClientGameTest {
 			.adjustSettings(settings -> settings.setGameMode(WorldCreationUiState.SelectedGameMode.CREATIVE))
 			.create()) {
 			context.waitTicks(60);
+			boolean gotEgg = singleplayer.getServer().computeOnServer(server -> player(server).getInventory().contains(new ItemStack(ModItems.TRICKSTER_SPAWN_EGG)));
+			System.out.println("[trickster-test] spawn egg given on join: " + gotEgg);
 			singleplayer.getServer().runCommand("time set noon");
 			singleplayer.getServer().runCommand("weather clear");
 			int y = singleplayer.getServer().computeOnServer(server -> playerY(server));
@@ -151,11 +153,71 @@ public class TricksterScreenshotTest implements FabricClientGameTest {
 			context.takeScreenshot("11_volley_2");
 			context.waitTicks(6);
 			context.takeScreenshot("11_volley_3");
+
+			// 8. Close-ups of the bat in his hand, front and side.
+			singleplayer.getServer().runOnServer(server -> {
+				clearArea(server);
+				spawnTrickster(server, y, 1.8, true);
+			});
+			context.getInput().lookAt(0.0F, 20.0F);
+			context.waitTicks(10);
+			context.takeScreenshot("12_bat_front");
+			singleplayer.getServer().runOnServer(server -> server.overworld().getEntitiesOfClass(TricksterEntity.class, player(server).getBoundingBox().inflate(20)).forEach(t -> {
+				t.setYRot(90.0F);
+				t.setYHeadRot(90.0F);
+				t.yBodyRot = 90.0F;
+			}));
+			context.waitTicks(5);
+			context.takeScreenshot("12_bat_side");
+
+			// 9. Third-person knife throws: the player, then the Trickster from the side.
+			singleplayer.getServer().runOnServer(server -> clearArea(server));
+			context.runOnClient(client -> client.options.setCameraType(CameraType.THIRD_PERSON_FRONT));
+			context.waitTicks(5);
+			context.takeScreenshot("13_player_ready");
+			context.getInput().holdKey(options -> options.keyUse);
+			for (int i = 0; i < 6; i++) {
+				context.waitTick();
+				context.takeScreenshot("13_player_throw_" + i);
+			}
+			context.getInput().releaseKey(options -> options.keyUse);
+			context.runOnClient(client -> client.options.setCameraType(CameraType.FIRST_PERSON));
+
+			singleplayer.getServer().runOnServer(server -> {
+				ServerLevel level = server.overworld();
+				TricksterEntity thrower = spawnTrickster(server, y, 3.5, false);
+				thrower.snapTo(PX - 1.5, y, PZ + 3.5);
+				Mob target = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
+				target.snapTo(PX + 9.0, y, PZ + 3.5);
+				target.setNoAi(true);
+				level.addFreshEntity(target);
+				thrower.setTarget(target);
+			});
+			context.getInput().lookAt(0.0F, 10.0F);
+			context.waitTicks(8);
+			for (int i = 0; i < 6; i++) {
+				context.waitTick();
+				context.takeScreenshot("14_trickster_throw_" + i);
+			}
+			context.waitTicks(60);
+			boolean zombieGone = singleplayer.getServer().computeOnServer(server ->
+				server.overworld().getEntitiesOfClass(net.minecraft.world.entity.monster.zombie.Zombie.class, player(server).getBoundingBox().inflate(30), z -> z.isAlive()).isEmpty()
+			);
+			System.out.println("[trickster-test] trickster lacerated the zombie: " + zombieGone);
+
+			// 10. Config screen.
+			context.runOnClient(client -> client.gui.setScreen(new com.trickstermod.client.config.TricksterConfigScreen(null)));
+			context.waitTicks(5);
+			context.takeScreenshot("15_config");
 		}
 	}
 
 	private static ServerPlayer player(MinecraftServer server) {
 		return server.getPlayerList().getPlayers().getFirst();
+	}
+
+	private static void clearArea(MinecraftServer server) {
+		server.overworld().getEntitiesOfClass(Mob.class, player(server).getBoundingBox().inflate(40)).forEach(Mob::discard);
 	}
 
 	private static int playerY(MinecraftServer server) {

@@ -1,6 +1,8 @@
 package com.trickstermod.item;
 
+import com.trickstermod.config.TricksterConfig;
 import com.trickstermod.entity.ThrownKnife;
+import com.trickstermod.network.KnifeThrowPayload;
 import com.trickstermod.registry.ModComponents;
 import com.trickstermod.registry.ModItems;
 import java.util.function.Consumer;
@@ -34,7 +36,6 @@ public class ThrowingKnivesItem extends Item {
 	public static final int STARTING_RESERVE = 60;
 	public static final int MAX_RESERVE = 60;
 	public static final int RELOAD_TICKS = 40;
-	public static final float KNIFE_DAMAGE = 2.0F;
 	public static final float KNIFE_SPEED = 2.6F;
 	private static final double AIM_RANGE = 48.0;
 
@@ -68,7 +69,7 @@ public class ThrowingKnivesItem extends Item {
 
 		if (level instanceof ServerLevel serverLevel) {
 			ThrownKnife knife = new ThrownKnife(serverLevel, player);
-			knife.setKnifeDamage(KNIFE_DAMAGE);
+			knife.setKnifeDamage((float)TricksterConfig.get().playerKnifeDamage);
 			// Start the knife from the throwing hand rather than the middle of the face.
 			Vec3 look = player.getLookAngle();
 			Vec3 right = new Vec3(-look.z, 0.0, look.x).normalize();
@@ -81,9 +82,8 @@ public class ThrowingKnivesItem extends Item {
 				knife.pickup = ThrownKnife.Pickup.CREATIVE_ONLY;
 			}
 			serverLevel.addFreshEntity(knife);
-			// Other players see the matching arm swing in third person.
-			InteractionHand swingHand = arm == player.getMainArm() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
-			player.swing(swingHand, stack.getAttackAnimation(), false);
+			// Everyone (including the thrower in third person) plays the overhand throw on the matching arm.
+			KnifeThrowPayload.broadcast(player, arm);
 		} else {
 			clientThrowListener.accept(arm);
 		}
