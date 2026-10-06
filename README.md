@@ -138,6 +138,9 @@ Requires Java 25.
 
 The mod jar ends up in `build/libs/`.
 
+The version number lives in `gradle.properties` (`version=`) and is bumped with every update; it ends up in the
+jar name and in the mod list in game.
+
 `./gradlew runClientGameTest` boots a test world and saves screenshots of the mod's visuals to
 `build/run/clientGameTest/screenshots`.
 
