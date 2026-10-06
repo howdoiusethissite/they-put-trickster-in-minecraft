@@ -17,7 +17,7 @@ import net.minecraft.world.entity.HumanoidArm;
  */
 public class TricksterRenderer extends HumanoidMobRenderer<TricksterEntity, HumanoidRenderState, HumanoidModel<HumanoidRenderState>> {
 	/** Set to true if the skin was made for the slim (3px arm, "Alex") player model. */
-	public static final boolean SLIM_ARMS = false;
+	public static final boolean SLIM_ARMS = true;
 	private static final Identifier TEXTURE = TricksterMod.id("textures/entity/trickster.png");
 
 	public TricksterRenderer(final EntityRendererProvider.Context context) {

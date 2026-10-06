@@ -6,8 +6,8 @@ Adds the Trickster from Dead by Daylight to Minecraft.
 
 ### The Trickster (mob)
 - Uses the normal player model with a custom skin: `src/main/resources/assets/trickster/textures/entity/trickster.png`.
-  The skin in the repo is a placeholder. Drop your own 64x64 skin over that file. If your skin uses slim (3px) arms,
-  set `SLIM_ARMS = true` in `TricksterRenderer.java`.
+  To swap skins, replace that file with another 64x64 skin. The current skin uses slim (3px) arms; for a classic
+  4px-arm skin set `SLIM_ARMS = false` in `TricksterRenderer.java`.
 - Wild Tricksters spawn rarely at night and hunt players. Up close they swing the Polished Head Smasher. From range
   they throw 8-knife volleys, alternating hands.
 - **Taming:** right click him with any music disc (1 in 3 chance per disc, the disc is used up). Once tamed he
@@ -49,7 +49,7 @@ The mod jar ends up in `build/libs/`.
 
 ## Screenshots
 
-Taken by the headless game test (placeholder skin).
+Taken by the headless game test.
 
 ![Trickster](docs/screenshots/trickster.png)
 ![First-person knives](docs/screenshots/knives_first_person.png)
