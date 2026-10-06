@@ -1,12 +1,66 @@
 {
-  "laugh": {
-    "subtitle": "subtitles.trickster.laugh",
+  "trickster.laugh": {
+    "subtitle": "subtitles.trickster.trickster.laugh",
     "sounds": [
-      {
-        "name": "minecraft:entity.witch.celebrate",
-        "type": "event",
-        "pitch": 1.35
-      }
+      "trickster:trickster/laugh/laugh1",
+      "trickster:trickster/laugh/laugh2",
+      "trickster:trickster/laugh/laugh3",
+      "trickster:trickster/laugh/laugh4",
+      "trickster:trickster/laugh/laugh5"
+    ]
+  },
+  "trickster.idle": {
+    "subtitle": "subtitles.trickster.trickster.idle",
+    "sounds": [
+      {"name": "minecraft:entity.witch.ambient", "type": "event", "pitch": 1.3}
+    ]
+  },
+  "trickster.annoyed": {
+    "subtitle": "subtitles.trickster.trickster.annoyed",
+    "sounds": [
+      {"name": "minecraft:entity.villager.no", "type": "event", "pitch": 0.85}
+    ]
+  },
+  "laceration.warning": {
+    "subtitle": "subtitles.trickster.laceration.warning",
+    "sounds": [
+      {"name": "minecraft:block.note_block.pling", "type": "event", "pitch": 0.7}
+    ]
+  },
+  "laceration.max": {
+    "subtitle": "subtitles.trickster.laceration.max",
+    "sounds": [
+      {"name": "minecraft:entity.player.attack.crit", "type": "event", "pitch": 0.6, "volume": 1.2}
+    ]
+  },
+  "knife.throw": {
+    "subtitle": "subtitles.trickster.knife.throw",
+    "sounds": [
+      {"name": "minecraft:item.trident.throw", "type": "event", "pitch": 1.6}
+    ]
+  },
+  "knife.hit_flesh": {
+    "subtitle": "subtitles.trickster.knife.hit_flesh",
+    "sounds": [
+      {"name": "minecraft:item.trident.hit", "type": "event", "pitch": 1.6}
+    ]
+  },
+  "knife.hit_block": {
+    "subtitle": "subtitles.trickster.knife.hit_block",
+    "sounds": [
+      {"name": "minecraft:item.trident.hit_ground", "type": "event", "pitch": 1.4}
+    ]
+  },
+  "knife.reload": {
+    "subtitle": "subtitles.trickster.knife.reload",
+    "sounds": [
+      {"name": "minecraft:item.armor.equip_chain", "type": "event", "pitch": 1.2}
+    ]
+  },
+  "knife.draw": {
+    "subtitle": "subtitles.trickster.knife.draw",
+    "sounds": [
+      {"name": "minecraft:item.crossbow.loading_end", "type": "event", "pitch": 1.5}
     ]
   }
 }

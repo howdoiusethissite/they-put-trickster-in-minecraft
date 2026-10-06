@@ -1,6 +1,7 @@
 package com.trickstermod.entity;
 
 import com.trickstermod.config.TricksterConfig;
+import com.trickstermod.fan.Fans;
 import com.trickstermod.network.KnifeThrowPayload;
 import com.trickstermod.registry.ModItems;
 import com.trickstermod.registry.ModSounds;
@@ -203,6 +204,9 @@ public class TricksterEntity extends TamableAnimal {
 		super.customServerAiStep(level);
 		this.updateMeters(level);
 		this.maybeGiveBuff();
+		if (this.tickCount % 10 == 0) {
+			Fans.starstruckNearbyRaiders(level, this);
+		}
 	}
 
 	private void updateMeters(ServerLevel level) {
@@ -231,7 +235,7 @@ public class TricksterEntity extends TamableAnimal {
 				} else if (this.getBoredom() >= MAX_METER) {
 					this.setMood(Mood.BORED);
 					this.tantrumTicks = BORED_TANTRUM_TICKS;
-					this.playSound(SoundEvents.WITCH_CELEBRATE, 1.0F, 1.3F);
+					this.playSound(ModSounds.ANNOYED, 1.0F, 1.0F);
 					owner.sendOverlayMessage(Component.translatable("message.trickster.bored"));
 				}
 			}
@@ -256,7 +260,7 @@ public class TricksterEntity extends TamableAnimal {
 	private void becomeAngry(ServerPlayer owner) {
 		this.setMood(Mood.ANGRY);
 		this.holdKnives(false);
-		this.playSound(SoundEvents.RAVAGER_ROAR, 0.6F, 1.6F);
+		this.playSound(ModSounds.ANNOYED, 1.2F, 0.9F);
 		owner.sendOverlayMessage(Component.translatable("message.trickster.angry"));
 	}
 
@@ -267,6 +271,7 @@ public class TricksterEntity extends TamableAnimal {
 			return;
 		}
 		if (knives) {
+			this.playSound(ModSounds.KNIFE_DRAW, 1.0F, 1.0F);
 			this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(ModItems.THROWN_KNIFE));
 			this.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(ModItems.THROWN_KNIFE));
 		} else {
@@ -290,7 +295,7 @@ public class TricksterEntity extends TamableAnimal {
 		level.addFreshEntity(knife);
 
 		KnifeThrowPayload.broadcast(this, hand == InteractionHand.MAIN_HAND ? this.getMainArm() : this.getMainArm().getOpposite());
-		this.playSound(SoundEvents.TRIDENT_THROW.value(), 0.6F, 1.5F + this.random.nextFloat() * 0.3F);
+		this.playSound(ModSounds.KNIFE_THROW, 0.6F, 0.95F + this.random.nextFloat() * 0.15F);
 	}
 
 	private void batOwner(ServerLevel level, ServerPlayer owner) {
@@ -326,7 +331,7 @@ public class TricksterEntity extends TamableAnimal {
 	}
 
 	public void laugh() {
-		this.playSound(ModSounds.LAUGH, 1.0F, 0.9F + this.random.nextFloat() * 0.25F);
+		this.playSound(ModSounds.LAUGH, 1.0F, 0.95F + this.random.nextFloat() * 0.1F);
 	}
 
 	/** Every few minutes a happy, well-watched Trickster cackles and hands his owner a random buff. */
@@ -351,12 +356,12 @@ public class TricksterEntity extends TamableAnimal {
 
 	@Override
 	protected @Nullable SoundEvent getAmbientSound() {
-		return this.random.nextInt(4) == 0 ? ModSounds.LAUGH : null;
+		return this.random.nextInt(5) == 0 ? ModSounds.LAUGH : ModSounds.IDLE;
 	}
 
 	@Override
 	public int getAmbientSoundInterval() {
-		return 300;
+		return 240;
 	}
 
 	// ---------------------------------------------------------------- taming and interaction
@@ -418,6 +423,7 @@ public class TricksterEntity extends TamableAnimal {
 			this.level().broadcastEntityEvent(this, (byte)7);
 		} else {
 			this.level().broadcastEntityEvent(this, (byte)6);
+			this.playSound(ModSounds.ANNOYED, 1.0F, 1.0F);
 		}
 	}
 

@@ -3,6 +3,7 @@ package com.trickstermod.laceration;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.trickstermod.TricksterMod;
+import com.trickstermod.registry.ModSounds;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentSyncPredicate;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
@@ -13,7 +14,6 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
@@ -71,11 +71,16 @@ public final class Laceration {
 		}
 
 		int cap = lethal ? MAX_STACKS : MAX_STACKS - 1;
-		int stacks = Math.min(getStacks(target) + 1, cap);
+		int previous = getStacks(target);
+		int stacks = Math.min(previous + 1, cap);
 		target.setAttached(ATTACHMENT, new State(stacks, level.getGameTime()));
 
+		if (stacks == MAX_STACKS - 1 && previous < stacks) {
+			// One more knife and it's over.
+			level.playSound(null, target.getX(), target.getY(), target.getZ(), ModSounds.LACERATION_WARNING, SoundSource.HOSTILE, 1.0F, 1.0F);
+		}
 		if (stacks >= MAX_STACKS) {
-			level.playSound(null, target.getX(), target.getY(), target.getZ(), SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.HOSTILE, 1.2F, 0.6F);
+			level.playSound(null, target.getX(), target.getY(), target.getZ(), ModSounds.LACERATION_MAX, SoundSource.HOSTILE, 1.0F, 1.0F);
 			level.sendParticles(ParticleTypes.DAMAGE_INDICATOR, target.getX(), target.getY(0.5), target.getZ(), 20, 0.3, 0.5, 0.3, 0.2);
 			DamageSource source = new DamageSource(
 				level.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(LACERATION_DAMAGE), knife, attacker

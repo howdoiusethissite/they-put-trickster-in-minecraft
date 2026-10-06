@@ -4,9 +4,9 @@ import com.trickstermod.item.ThrowingKnivesItem;
 import com.trickstermod.laceration.Laceration;
 import com.trickstermod.registry.ModEntities;
 import com.trickstermod.registry.ModItems;
+import com.trickstermod.registry.ModSounds;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -34,7 +34,7 @@ public class ThrownKnife extends AbstractArrow {
 
 	public ThrownKnife(final Level level, final LivingEntity owner) {
 		super(ModEntities.THROWN_KNIFE, owner, level, new ItemStack(ModItems.THROWN_KNIFE), null);
-		this.setSoundEvent(SoundEvents.TRIDENT_HIT_GROUND);
+		this.setSoundEvent(ModSounds.KNIFE_HIT_BLOCK);
 	}
 
 	public void setKnifeDamage(float damage) {
@@ -53,7 +53,7 @@ public class ThrownKnife extends AbstractArrow {
 
 	@Override
 	protected SoundEvent getDefaultHitGroundSoundEvent() {
-		return SoundEvents.TRIDENT_HIT_GROUND;
+		return ModSounds.KNIFE_HIT_BLOCK;
 	}
 
 	@Override
@@ -93,7 +93,9 @@ public class ThrownKnife extends AbstractArrow {
 			}
 		}
 
-		this.playSound(SoundEvents.TRIDENT_HIT, 0.6F, 1.6F + this.random.nextFloat() * 0.2F);
+		// Flesh for anything alive, the same clang as hitting a block for boats, armor stands and the like.
+		SoundEvent hitSound = entity instanceof LivingEntity ? ModSounds.KNIFE_HIT_FLESH : ModSounds.KNIFE_HIT_BLOCK;
+		this.playSound(hitSound, 0.8F, 0.95F + this.random.nextFloat() * 0.15F);
 		this.discard();
 	}
 

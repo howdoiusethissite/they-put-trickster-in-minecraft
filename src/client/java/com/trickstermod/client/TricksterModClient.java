@@ -8,6 +8,7 @@ import com.trickstermod.client.render.KnifeThrowAnimation;
 import com.trickstermod.client.render.ThirdPersonThrows;
 import com.trickstermod.client.render.ThrownKnifeRenderer;
 import com.trickstermod.client.render.TricksterRenderer;
+import com.trickstermod.client.sound.CustomSoundPack;
 import com.trickstermod.item.ThrowingKnivesItem;
 import com.trickstermod.network.KnifeThrowPayload;
 import com.trickstermod.registry.ModEntities;
@@ -28,6 +29,7 @@ public class TricksterModClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
+		CustomSoundPack.createFolders();
 		EntityRendererRegistry.register(ModEntities.TRICKSTER, TricksterRenderer::new);
 		EntityRendererRegistry.register(ModEntities.THROWN_KNIFE, ThrownKnifeRenderer::new);
 
