@@ -44,6 +44,11 @@ public class TricksterMod implements ModInitializer {
 		.persistent(Codec.BOOL)
 		.copyOnDeath()
 		.buildAndRegister(id("got_spawn_egg"));
+	/** Marks players who already got their NoSpin lightstick, so it is only handed out once per world. */
+	public static final AttachmentType<Boolean> GOT_LIGHTSTICK = AttachmentRegistry.<Boolean>builder()
+		.persistent(Codec.BOOL)
+		.copyOnDeath()
+		.buildAndRegister(id("got_lightstick"));
 
 	@Override
 	public void onInitialize() {
@@ -72,7 +77,10 @@ public class TricksterMod implements ModInitializer {
 			BiomeModifications.addSpawn(BiomeSelectors.foundInOverworld(), MobCategory.MONSTER, ModEntities.TRICKSTER, 2, 1, 1);
 		}
 
-		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> giveSpawnEgg(handler.player));
+		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+			giveSpawnEgg(handler.player);
+			giveLightstick(handler.player);
+		});
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> ZoomTracker.set(handler.player, false));
 		ServerTickEvents.END_SERVER_TICK.register(server -> server.getPlayerList().getPlayers().forEach(ThrowingKnivesItem::tickDrawSound));
 	}
@@ -83,6 +91,14 @@ public class TricksterMod implements ModInitializer {
 		}
 		player.setAttached(GOT_SPAWN_EGG, true);
 		player.getInventory().placeItemBackInInventory(new ItemStack(ModItems.TRICKSTER_SPAWN_EGG), net.minecraft.util.Prediction.SERVER_ONLY);
+	}
+
+	private static void giveLightstick(ServerPlayer player) {
+		if (player.hasAttached(GOT_LIGHTSTICK)) {
+			return;
+		}
+		player.setAttached(GOT_LIGHTSTICK, true);
+		player.getInventory().placeItemBackInInventory(new ItemStack(ModItems.NOSPIN_LIGHTSTICK), net.minecraft.util.Prediction.SERVER_ONLY);
 	}
 
 	public static Identifier id(String path) {

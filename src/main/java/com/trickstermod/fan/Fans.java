@@ -36,7 +36,6 @@ public final class Fans {
 	private static final double STARSTRUCK_RANGE = 20.0;
 	private static final double AUDIENCE_RANGE = 16.0;
 	private static final double TIPPING_RANGE = 6.0;
-	private static final long TICKS_PER_DAY = 24000L;
 	private static final List<Item> SMALL_TIPS = List.of(Items.POPPY, Items.CORNFLOWER, Items.BREAD, Items.COOKIE, Items.APPLE);
 
 	/**
@@ -47,7 +46,7 @@ public final class Fans {
 		.persistent(Codec.LONG)
 		.buildAndRegister(TricksterMod.id("starstruck_until"));
 
-	/** Game time a villager last tipped a performing Trickster. Each villager tips at most once a day. */
+	/** The show a villager last tipped at (see {@link #gatherAudience}). Each villager tips at most once per show. */
 	public static final AttachmentType<Long> LAST_TIP = AttachmentRegistry.<Long>builder()
 		.persistent(Codec.LONG)
 		.buildAndRegister(TricksterMod.id("last_tip"));
@@ -60,22 +59,23 @@ public final class Fans {
 	/**
 	 * Called every couple of seconds while a Trickster dances by a jukebox. Nearby villagers walk over to watch,
 	 * and ones in the front row sometimes throw him a tip: usually an emerald, sometimes a flower or a snack.
+	 *
+	 * @param showId identifies the current show (one song on one jukebox), so each villager tips once per show
 	 */
-	public static void gatherAudience(ServerLevel level, TricksterEntity performer) {
+	public static void gatherAudience(ServerLevel level, TricksterEntity performer, long showId) {
 		List<Villager> villagers = level.getEntitiesOfClass(
 			Villager.class,
 			performer.getBoundingBox().inflate(AUDIENCE_RANGE),
 			villager -> villager.isAlive() && !villager.isSleeping() && !villager.isTrading()
 		);
-		long now = level.getGameTime();
 		for (Villager villager : villagers) {
 			villager.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(performer, 0.6F, 3));
 			villager.getBrain().setMemory(MemoryModuleType.LOOK_TARGET, new EntityTracker(performer, true));
 
 			Long lastTip = villager.getAttached(LAST_TIP);
-			boolean canTip = !villager.isBaby() && (lastTip == null || now - lastTip >= TICKS_PER_DAY);
+			boolean canTip = !villager.isBaby() && (lastTip == null || lastTip != showId);
 			if (canTip && villager.distanceToSqr(performer) < TIPPING_RANGE * TIPPING_RANGE && level.getRandom().nextInt(5) == 0) {
-				villager.setAttached(LAST_TIP, now);
+				villager.setAttached(LAST_TIP, showId);
 				ItemStack tip = level.getRandom().nextInt(10) < 6
 					? new ItemStack(Items.EMERALD, 1 + level.getRandom().nextInt(2))
 					: new ItemStack(SMALL_TIPS.get(level.getRandom().nextInt(SMALL_TIPS.size())));
